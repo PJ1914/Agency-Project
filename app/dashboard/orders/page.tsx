@@ -203,9 +203,9 @@ export default function OrdersPage() {
             <p className="text-sm text-gray-700 dark:text-gray-300 mb-2"><strong>Quick Fix:</strong></p>
             <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
               <li>Go to <a href="https://console.firebase.google.com/project/huggies-9f6e1/firestore/rules" target="_blank" className="text-blue-600 underline">Firebase Console → Firestore Rules</a></li>
-              <li>Click "Rules" tab</li>
+              <li>Click &quot;Rules&quot; tab</li>
               <li>Paste: <code className="bg-gray-100 px-1">allow read, write: if request.auth != null;</code></li>
-              <li>Click "Publish"</li>
+              <li>Click &quot;Publish&quot;</li>
               <li>Refresh this page</li>
             </ol>
           </div>

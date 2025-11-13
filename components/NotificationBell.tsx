@@ -157,7 +157,7 @@ export function NotificationBell() {
                 <div className="p-6 sm:p-8 text-center text-gray-500">
                   <Bell className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 text-gray-300" />
                   <p className="font-medium text-sm sm:text-base">No new notifications</p>
-                  <p className="text-xs sm:text-sm mt-1">You're all caught up!</p>
+                  <p className="text-xs sm:text-sm mt-1">You&apos;re all caught up!</p>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">

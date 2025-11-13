@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
               <Mail className="h-8 w-8 text-indigo-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Forgot Password?</h1>
-            <p className="text-gray-600">No worries, we'll send you reset instructions</p>
+            <p className="text-gray-600">No worries, we&apos;ll send you reset instructions</p>
           </div>
 
           {error && (
