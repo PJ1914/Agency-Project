@@ -1,0 +1,130 @@
+'use client';
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useFirestore } from '@/hooks/useFirestore';
+import { Order } from '@/types/order.d';
+import { Transaction } from '@/types/transaction.d';
+import { Shipment } from '@/types/shipment.d';
+import { InventoryItem } from '@/types/inventory.d';
+import { Notification } from '@/types/notification.d';
+import { where } from 'firebase/firestore';
+import { useOrganization } from './OrganizationContext';
+
+interface DataContextType {
+  // Orders
+  orders: Order[];
+  ordersLoading: boolean;
+  ordersError: any;
+  refetchOrders: () => void;
+  
+  // Transactions
+  transactions: Transaction[];
+  transactionsLoading: boolean;
+  transactionsError: any;
+  refetchTransactions: () => void;
+  
+  // Shipments
+  shipments: Shipment[];
+  shipmentsLoading: boolean;
+  shipmentsError: any;
+  refetchShipments: () => void;
+  
+  // Inventory
+  inventory: InventoryItem[];
+  inventoryLoading: boolean;
+  inventoryError: any;
+  refetchInventory: () => void;
+  
+  // Notifications
+  notifications: Notification[];
+  notificationsLoading: boolean;
+  notificationsError: any;
+  refetchNotifications: () => void;
+  unreadNotificationsCount: number;
+}
+
+const DataContext = createContext<DataContextType | undefined>(undefined);
+
+export function DataProvider({ children }: { children: ReactNode }) {
+  const { currentOrganization } = useOrganization();
+  const organizationId = currentOrganization?.id;
+
+  // Fetch data filtered by organization
+  const { 
+    data: orders, 
+    loading: ordersLoading, 
+    error: ordersError, 
+    refetch: refetchOrders 
+  } = useFirestore<Order>('orders', organizationId ? [where('organizationId', '==', organizationId)] : []);
+
+  const { 
+    data: transactions, 
+    loading: transactionsLoading, 
+    error: transactionsError, 
+    refetch: refetchTransactions 
+  } = useFirestore<Transaction>('transactions', organizationId ? [where('organizationId', '==', organizationId)] : []);
+
+  const { 
+    data: shipments, 
+    loading: shipmentsLoading, 
+    error: shipmentsError, 
+    refetch: refetchShipments 
+  } = useFirestore<Shipment>('shipments', organizationId ? [where('organizationId', '==', organizationId)] : []);
+
+  const { 
+    data: inventory, 
+    loading: inventoryLoading, 
+    error: inventoryError, 
+    refetch: refetchInventory 
+  } = useFirestore<InventoryItem>('inventory', organizationId ? [where('organizationId', '==', organizationId)] : []);
+
+  const { 
+    data: notifications, 
+    loading: notificationsLoading, 
+    error: notificationsError, 
+    refetch: refetchNotifications 
+  } = useFirestore<Notification>('notifications', organizationId ? [
+    where('organizationId', '==', organizationId),
+    where('read', '==', false)
+  ] : [where('read', '==', false)]);
+
+  const unreadNotificationsCount = notifications.length;
+
+  const value = {
+    orders,
+    ordersLoading,
+    ordersError,
+    refetchOrders,
+    
+    transactions,
+    transactionsLoading,
+    transactionsError,
+    refetchTransactions,
+    
+    shipments,
+    shipmentsLoading,
+    shipmentsError,
+    refetchShipments,
+    
+    inventory,
+    inventoryLoading,
+    inventoryError,
+    refetchInventory,
+    
+    notifications,
+    notificationsLoading,
+    notificationsError,
+    refetchNotifications,
+    unreadNotificationsCount,
+  };
+
+  return <DataContext.Provider value={value}>{children}</DataContext.Provider>;
+}
+
+export function useData() {
+  const context = useContext(DataContext);
+  if (context === undefined) {
+    throw new Error('useData must be used within a DataProvider');
+  }
+  return context;
+}
