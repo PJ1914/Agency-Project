@@ -144,8 +144,8 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">Manage your account and application preferences</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your account and application preferences</p>
         </div>
         <Button onClick={handleSaveSettings} className="gap-2">
           <Save className="h-4 w-4" />
@@ -157,7 +157,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Shield className="h-5 w-5 text-indigo-600" />
+            <Shield className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <CardTitle>Profile Information</CardTitle>
           </div>
           <CardDescription>Your personal account details</CardDescription>
@@ -171,7 +171,7 @@ export default function SettingsPage() {
                 type="email"
                 value={user?.email || ''}
                 disabled
-                className="bg-gray-50"
+                className="bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
               />
             </div>
             <div className="space-y-2">
@@ -181,6 +181,7 @@ export default function SettingsPage() {
                 type="text"
                 value={user?.displayName || ''}
                 placeholder="Your name"
+                className="dark:bg-gray-800 dark:border-gray-700"
               />
             </div>
           </div>
@@ -190,7 +191,7 @@ export default function SettingsPage() {
               id="organization"
               value={currentOrganization?.name || 'Not set'}
               disabled
-              className="bg-gray-50"
+              className="bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
             />
           </div>
         </CardContent>
@@ -213,34 +214,34 @@ export default function SettingsPage() {
                 onClick={() => handleThemeChange('light')}
                 className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
                   settings.theme === 'light'
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-500'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                 }`}
               >
-                <Sun className="h-5 w-5" />
-                <span className="font-medium">Light</span>
+                <Sun className="h-5 w-5 dark:text-gray-300" />
+                <span className="font-medium dark:text-gray-200">Light</span>
               </button>
               <button
                 onClick={() => handleThemeChange('dark')}
                 className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
                   settings.theme === 'dark'
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-500'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                 }`}
               >
-                <Moon className="h-5 w-5" />
-                <span className="font-medium">Dark</span>
+                <Moon className="h-5 w-5 dark:text-gray-300" />
+                <span className="font-medium dark:text-gray-200">Dark</span>
               </button>
               <button
                 onClick={() => handleThemeChange('system')}
                 className={`flex items-center justify-center gap-2 p-4 rounded-lg border-2 transition-all ${
                   settings.theme === 'system'
-                    ? 'border-indigo-600 bg-indigo-50'
-                    : 'border-gray-200 hover:border-gray-300'
+                    ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:border-indigo-500'
+                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                 }`}
               >
-                <Monitor className="h-5 w-5" />
-                <span className="font-medium">System</span>
+                <Monitor className="h-5 w-5 dark:text-gray-300" />
+                <span className="font-medium dark:text-gray-200">System</span>
               </button>
             </div>
           </div>
@@ -252,13 +253,13 @@ export default function SettingsPage() {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium">Compact Mode</div>
-                  <p className="text-xs text-gray-500">Reduce spacing for more content</p>
+                  <div className="text-sm font-medium dark:text-gray-200">Compact Mode</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Reduce spacing for more content</p>
                 </div>
                 <button
                   onClick={() => togglePreference('compactMode')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.preferences.compactMode ? 'bg-indigo-600' : 'bg-gray-300'
+                    settings.preferences.compactMode ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span
@@ -271,13 +272,13 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium">Show Animations</div>
-                  <p className="text-xs text-gray-500">Enable smooth transitions</p>
+                  <div className="text-sm font-medium dark:text-gray-200">Show Animations</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Enable smooth transitions</p>
                 </div>
                 <button
                   onClick={() => togglePreference('showAnimations')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.preferences.showAnimations ? 'bg-indigo-600' : 'bg-gray-300'
+                    settings.preferences.showAnimations ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span
@@ -290,13 +291,13 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="text-sm font-medium">Auto-Save</div>
-                  <p className="text-xs text-gray-500">Automatically save changes</p>
+                  <div className="text-sm font-medium dark:text-gray-200">Auto-Save</div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Automatically save changes</p>
                 </div>
                 <button
                   onClick={() => togglePreference('autoSave')}
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    settings.preferences.autoSave ? 'bg-indigo-600' : 'bg-gray-300'
+                    settings.preferences.autoSave ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                   }`}
                 >
                   <span
@@ -315,7 +316,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-indigo-600" />
+            <Bell className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <CardTitle>Notifications</CardTitle>
           </div>
           <CardDescription>Manage how you receive alerts and updates</CardDescription>
@@ -325,15 +326,15 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between py-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-500" />
-                  <div className="text-sm font-medium">Email Notifications</div>
+                  <Mail className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <div className="text-sm font-medium dark:text-gray-200">Email Notifications</div>
                 </div>
-                <p className="text-xs text-gray-500 ml-6">Receive updates via email</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">Receive updates via email</p>
               </div>
               <button
                 onClick={() => toggleNotification('email')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.notifications.email ? 'bg-indigo-600' : 'bg-gray-300'
+                  settings.notifications.email ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -348,13 +349,13 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between py-2">
               <div>
-                <div className="text-sm font-medium">Order Updates</div>
-                <p className="text-xs text-gray-500">Get notified about order status changes</p>
+                <div className="text-sm font-medium dark:text-gray-200">Order Updates</div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Get notified about order status changes</p>
               </div>
               <button
                 onClick={() => toggleNotification('orderUpdates')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.notifications.orderUpdates ? 'bg-indigo-600' : 'bg-gray-300'
+                  settings.notifications.orderUpdates ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -367,13 +368,13 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between py-2">
               <div>
-                <div className="text-sm font-medium">Inventory Alerts</div>
-                <p className="text-xs text-gray-500">Notifications for inventory changes</p>
+                <div className="text-sm font-medium dark:text-gray-200">Inventory Alerts</div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Notifications for inventory changes</p>
               </div>
               <button
                 onClick={() => toggleNotification('inventoryAlerts')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.notifications.inventoryAlerts ? 'bg-indigo-600' : 'bg-gray-300'
+                  settings.notifications.inventoryAlerts ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -386,13 +387,13 @@ export default function SettingsPage() {
 
             <div className="flex items-center justify-between py-2">
               <div>
-                <div className="text-sm font-medium">Low Stock Alerts</div>
-                <p className="text-xs text-gray-500">Alert when inventory is running low</p>
+                <div className="text-sm font-medium dark:text-gray-200">Low Stock Alerts</div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Alert when inventory is running low</p>
               </div>
               <button
                 onClick={() => toggleNotification('lowStockAlerts')}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  settings.notifications.lowStockAlerts ? 'bg-indigo-600' : 'bg-gray-300'
+                  settings.notifications.lowStockAlerts ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
                 }`}
               >
                 <span
@@ -429,7 +430,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Globe className="h-5 w-5 text-indigo-600" />
+            <Globe className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <CardTitle>Regional & Display</CardTitle>
           </div>
           <CardDescription>Configure language, timezone, and formats</CardDescription>
@@ -445,7 +446,7 @@ export default function SettingsPage() {
                 id="language"
                 value={settings.display.language}
                 onChange={(e) => updateDisplay('language', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="en">English</option>
                 <option value="hi">Hindi (हिंदी)</option>
@@ -464,7 +465,7 @@ export default function SettingsPage() {
                 id="timezone"
                 value={settings.display.timezone}
                 onChange={(e) => updateDisplay('timezone', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="Asia/Kolkata">Asia/Kolkata (IST)</option>
                 <option value="America/New_York">America/New York (EST)</option>
@@ -480,7 +481,7 @@ export default function SettingsPage() {
                 id="dateFormat"
                 value={settings.display.dateFormat}
                 onChange={(e) => updateDisplay('dateFormat', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="DD-MM-YYYY">DD-MM-YYYY (13-11-2025)</option>
                 <option value="MM-DD-YYYY">MM-DD-YYYY (11-13-2025)</option>
@@ -497,7 +498,7 @@ export default function SettingsPage() {
                 id="currency"
                 value={settings.display.currency}
                 onChange={(e) => updateDisplay('currency', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
               >
                 <option value="INR">₹ INR (Indian Rupee)</option>
                 <option value="USD">$ USD (US Dollar)</option>
@@ -514,7 +515,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Database className="h-5 w-5 text-indigo-600" />
+            <Database className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
             <CardTitle>System Information</CardTitle>
           </div>
           <CardDescription>Application and integration details</CardDescription>
@@ -522,22 +523,22 @@ export default function SettingsPage() {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p className="text-gray-500 mb-1">Application Version</p>
-              <p className="font-medium">v1.0.0</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-1">Application Version</p>
+              <p className="font-medium dark:text-gray-200">v1.0.0</p>
             </div>
             <div>
-              <p className="text-gray-500 mb-1">Firebase Project</p>
-              <p className="font-medium font-mono text-xs">
+              <p className="text-gray-500 dark:text-gray-400 mb-1">Firebase Project</p>
+              <p className="font-medium font-mono text-xs dark:text-gray-200">
                 {process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'Not configured'}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 mb-1">User ID</p>
-              <p className="font-medium font-mono text-xs truncate">{user?.uid || 'N/A'}</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-1">User ID</p>
+              <p className="font-medium font-mono text-xs truncate dark:text-gray-200">{user?.uid || 'N/A'}</p>
             </div>
             <div>
-              <p className="text-gray-500 mb-1">Organization ID</p>
-              <p className="font-medium font-mono text-xs truncate">
+              <p className="text-gray-500 dark:text-gray-400 mb-1">Organization ID</p>
+              <p className="font-medium font-mono text-xs truncate dark:text-gray-200">
                 {currentOrganization?.id || 'N/A'}
               </p>
             </div>
@@ -545,20 +546,20 @@ export default function SettingsPage() {
 
           <Separator />
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="font-medium mb-2">Integrations Status</h4>
+          <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+            <h4 className="font-medium mb-2 dark:text-gray-200">Integrations Status</h4>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Firebase Authentication</span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
+                <span className="text-gray-600 dark:text-gray-400">Firebase Authentication</span>
+                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs">Active</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Firestore Database</span>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Active</span>
+                <span className="text-gray-600 dark:text-gray-400">Firestore Database</span>
+                <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full text-xs">Active</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-600">Razorpay Payments</span>
-                <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">Configured</span>
+                <span className="text-gray-600 dark:text-gray-400">Razorpay Payments</span>
+                <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded-full text-xs">Configured</span>
               </div>
             </div>
           </div>
@@ -566,9 +567,9 @@ export default function SettingsPage() {
       </Card>
 
       {/* Save Button (sticky at bottom) */}
-      <div className="sticky bottom-0 bg-white border-t pt-4 pb-2">
+      <div className="sticky bottom-0 bg-white dark:bg-gray-950 border-t dark:border-gray-800 pt-4 pb-2">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {saved ? '✓ All changes saved successfully' : 'Remember to save your changes'}
           </p>
           <Button onClick={handleSaveSettings} size="lg" className="gap-2">

@@ -93,7 +93,7 @@ export default function PaymentsPage() {
     { 
       header: 'Payment Mode', 
       accessor: ((tx: Transaction) => (
-        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 capitalize">
+        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 capitalize">
           {tx.paymentMode}
         </span>
       )) as any 
@@ -188,11 +188,11 @@ export default function PaymentsPage() {
       {/* Filter and Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2 flex-1">
-          <Filter className="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
           <select
             value={filterMode}
             onChange={(e) => setFilterMode(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="all">All Payment Modes</option>
             <option value="cash">Cash Only</option>

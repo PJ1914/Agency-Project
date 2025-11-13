@@ -33,13 +33,22 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     try {
       setLoading(true);
       
+      console.log('Loading organizations from Firestore...');
+      
       // Fetch all organizations from Firestore
       const orgsSnapshot = await getDocs(collection(db, 'organizations'));
-      const orgs = orgsSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      } as Organization));
+      console.log('Organizations snapshot size:', orgsSnapshot.size);
+      
+      const orgs = orgsSnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Organization found:', doc.id, data);
+        return {
+          id: doc.id,
+          ...data
+        } as Organization;
+      });
 
+      console.log('Total organizations loaded:', orgs.length);
       setOrganizations(orgs);
 
       // Get saved organization ID from localStorage or use first one
@@ -48,11 +57,13 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       if (savedOrgId) {
         selectedOrg = orgs.find(o => o.id === savedOrgId);
+        console.log('Saved org found:', selectedOrg?.name);
       }
       
       // If no saved org or saved org not found, use first one
       if (!selectedOrg && orgs.length > 0) {
         selectedOrg = orgs[0];
+        console.log('Using first org:', selectedOrg.name);
       }
 
       if (selectedOrg) {
@@ -72,6 +83,8 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         } as OrganizationMember);
+      } else {
+        console.log('No organizations found in database');
       }
 
       setLoading(false);

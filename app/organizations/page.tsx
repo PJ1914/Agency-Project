@@ -389,8 +389,37 @@ export default function OrganizationsManagePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {organizations.map((org) => (
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-400">Loading organizations...</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && organizations.length === 0 && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
+            <Building2 className="w-16 h-16 mx-auto text-gray-400 dark:text-gray-600 mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+              No Organizations Yet
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
+              Get started by creating your first organization
+            </p>
+            <Button onClick={() => setIsAdding(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Create First Organization
+            </Button>
+          </div>
+        )}
+
+        {/* Organizations Grid */}
+        {!loading && organizations.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {organizations.map((org) => (
             <div
               key={org.id}
               className={`bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all hover:shadow-lg ${
@@ -487,7 +516,8 @@ export default function OrganizationsManagePage() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
