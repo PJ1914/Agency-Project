@@ -127,11 +127,11 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Payments</h1>
-          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">Track all payment transactions (online & offline)</p>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Payments</h1>
+          <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Track all payment transactions (online & offline)</p>
         </div>
         <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center justify-center gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
@@ -140,32 +140,32 @@ export default function PaymentsPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-4 sm:p-6 text-white shadow-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg p-3 sm:p-4 md:p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-green-100 text-xs sm:text-sm font-medium">Total Revenue</p>
-              <p className="text-2xl sm:text-3xl font-bold mt-2">{formatCurrency(totalRevenue)}</p>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-2">{formatCurrency(totalRevenue)}</p>
               <p className="text-green-100 text-xs mt-2">From successful transactions</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-4 sm:p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-lg p-3 sm:p-4 md:p-6 text-white shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-yellow-100 text-xs sm:text-sm font-medium">Pending Amount</p>
-              <p className="text-2xl sm:text-3xl font-bold mt-2">{formatCurrency(pendingAmount)}</p>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-2">{formatCurrency(pendingAmount)}</p>
               <p className="text-yellow-100 text-xs mt-2">Awaiting confirmation</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-4 sm:p-6 text-white shadow-lg sm:col-span-2 lg:col-span-1">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg p-3 sm:p-4 md:p-6 text-white shadow-lg sm:col-span-2 lg:col-span-1">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-blue-100 text-xs sm:text-sm font-medium">Total Transactions</p>
-              <p className="text-2xl sm:text-3xl font-bold mt-2">{transactions.length}</p>
+              <p className="text-xl sm:text-2xl md:text-3xl font-bold mt-2">{transactions.length}</p>
               <p className="text-blue-100 text-xs mt-2">All payment records</p>
             </div>
           </div>
@@ -173,13 +173,13 @@ export default function PaymentsPage() {
       </div>
 
       {/* Payment Mode Breakdown */}
-      <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-        <h3 className="text-base sm:text-lg font-semibold mb-4">Payment Mode Breakdown</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-3 sm:p-4 md:p-6">
+        <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-3 sm:mb-4 dark:text-gray-100">Payment Mode Breakdown</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
           {Object.entries(paymentModeBreakdown).map(([mode, amount]) => (
-            <div key={mode} className="border rounded-lg p-3 sm:p-4">
-              <p className="text-xs sm:text-sm text-gray-600 capitalize">{mode}</p>
-              <p className="text-lg sm:text-xl font-bold text-gray-900">{formatCurrency(amount)}</p>
+            <div key={mode} className="border dark:border-gray-700 rounded-lg p-2 sm:p-3 md:p-4">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 capitalize">{mode}</p>
+              <p className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-gray-100">{formatCurrency(amount)}</p>
             </div>
           ))}
         </div>
@@ -188,11 +188,11 @@ export default function PaymentsPage() {
       {/* Filter and Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
         <div className="flex items-center gap-2 flex-1">
-          <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+          <Filter className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
           <select
             value={filterMode}
             onChange={(e) => setFilterMode(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full px-2 sm:px-3 py-1.5 sm:py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-xs sm:text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
           >
             <option value="all">All Payment Modes</option>
             <option value="cash">Cash Only</option>
@@ -204,18 +204,18 @@ export default function PaymentsPage() {
             <option value="other">Other</option>
           </select>
         </div>
-        <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto">
-          <Download className="w-4 h-4" />
+        <Button variant="outline" className="flex items-center justify-center gap-2 w-full sm:w-auto text-xs sm:text-sm">
+          <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           Export CSV
         </Button>
       </div>
 
       {transactionsLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-gray-500">Loading payments...</div>
+          <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Loading payments...</div>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50">
           <DataTable data={filteredTransactions} columns={columns} />
         </div>
       )}

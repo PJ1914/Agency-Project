@@ -27,6 +27,21 @@ export interface Organization {
     theme?: 'light' | 'dark';
     notifications?: boolean;
     twoFactorAuth?: boolean;
+    invoice?: {
+      gstin?: string;
+      pan?: string;
+      bankName?: string;
+      accountNumber?: string;
+      ifscCode?: string;
+      termsAndConditions?: string;
+      footerText?: string;
+      taxRates?: {
+        gst5: number;
+        gst12: number;
+        gst18: number;
+        gst28: number;
+      };
+    };
   };
 }
 

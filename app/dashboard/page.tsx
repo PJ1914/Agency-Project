@@ -133,14 +133,14 @@ export default function DashboardPage() {
   const revenueTrend = calculateTrend('revenue');
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
-        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">Track your business metrics in real-time</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
+        <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Track your business metrics in real-time</p>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
         <StatCard
           title="Total Orders"
           value={totalOrders}
@@ -171,7 +171,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
         <ChartCard title="Revenue Trend" description="Monthly revenue over time">
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={revenueData}>
@@ -198,42 +198,42 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-4 dark:text-gray-100">Recent Orders</h3>
-          <div className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 md:gap-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-3 sm:p-4 md:p-6">
+          <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-3 sm:mb-4 dark:text-gray-100">Recent Orders</h3>
+          <div className="space-y-2 sm:space-y-3">
             {orders.slice(0, 5).map((order) => (
-              <div key={order.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0 gap-3">
+              <div key={order.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0 gap-2 sm:gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm sm:text-base truncate dark:text-gray-100">{order.clientName}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{order.orderId}</p>
+                  <p className="font-medium text-xs sm:text-sm md:text-base truncate dark:text-gray-100">{order.clientName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{order.orderId}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-semibold text-sm sm:text-base dark:text-gray-100">{formatCurrency(order.amount)}</p>
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 inline-block">
+                  <p className="font-semibold text-xs sm:text-sm md:text-base dark:text-gray-100">{formatCurrency(order.amount)}</p>
+                  <span className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 inline-block">
                     {order.status}
                   </span>
                 </div>
               </div>
             ))}
             {orders.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">No orders yet</p>
+              <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-xs sm:text-sm">No orders yet</p>
             )}
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold mb-4 dark:text-gray-100">Recent Transactions</h3>
-          <div className="space-y-3">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-3 sm:p-4 md:p-6">
+          <h3 className="text-sm sm:text-base md:text-lg font-semibold mb-3 sm:mb-4 dark:text-gray-100">Recent Transactions</h3>
+          <div className="space-y-2 sm:space-y-3">
             {transactions.slice(0, 5).map((tx) => (
-              <div key={tx.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0 gap-3">
+              <div key={tx.id} className="flex items-center justify-between py-2 border-b dark:border-gray-700 last:border-0 gap-2 sm:gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm sm:text-base truncate dark:text-gray-100">{tx.transactionId}</p>
-                  <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 capitalize">{tx.paymentMode}</p>
+                  <p className="font-medium text-xs sm:text-sm md:text-base truncate dark:text-gray-100">{tx.transactionId}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">{tx.paymentMode}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="font-semibold text-sm sm:text-base dark:text-gray-100">{formatCurrency(tx.amount)}</p>
-                  <span className={`text-xs px-2 py-1 rounded-full inline-block ${
+                  <p className="font-semibold text-xs sm:text-sm md:text-base dark:text-gray-100">{formatCurrency(tx.amount)}</p>
+                  <span className={`text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full inline-block ${
                     tx.status === 'Success' ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 
                     tx.status === 'Pending' ? 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200' : 
                     'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200'
@@ -244,7 +244,7 @@ export default function DashboardPage() {
               </div>
             ))}
             {transactions.length === 0 && (
-              <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-sm">No transactions yet</p>
+              <p className="text-center text-gray-500 dark:text-gray-400 py-4 text-xs sm:text-sm">No transactions yet</p>
             )}
           </div>
         </div>

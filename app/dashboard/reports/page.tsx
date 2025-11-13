@@ -65,67 +65,67 @@ export default function ReportsPage() {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
-        <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 mt-1">Generate and export business reports with payment insights</p>
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Reports</h1>
+        <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Generate and export business reports with payment insights</p>
       </div>
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Revenue</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Total Revenue</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold dark:text-gray-100">{formatCurrency(totalRevenue)}</div>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <div className="text-xl sm:text-2xl md:text-3xl font-bold dark:text-gray-100">{formatCurrency(totalRevenue)}</div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">From successful transactions</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Transactions</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Total Transactions</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{totalTransactions}</p>
-            <p className="text-xs text-gray-500 mt-1">All payment records</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <p className="text-xl sm:text-2xl font-bold dark:text-gray-100">{totalTransactions}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">All payment records</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Successful</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Successful</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">{successfulTransactions}</p>
-            <p className="text-xs text-gray-500 mt-1">Completed payments</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-500">{successfulTransactions}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Completed payments</p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Pending</CardTitle>
+          <CardHeader className="pb-2 p-3 sm:p-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-300">Pending</CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-yellow-600">{pendingTransactions}</p>
-            <p className="text-xs text-gray-500 mt-1">Awaiting confirmation</p>
+          <CardContent className="p-3 sm:p-4 pt-0">
+            <p className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-500">{pendingTransactions}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Awaiting confirmation</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Payment Mode Breakdown Chart */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <CardTitle className="flex items-center gap-2 text-sm sm:text-base md:text-lg">
             <PieChartIcon className="w-4 h-4 sm:w-5 sm:h-5" />
             Payment Mode Breakdown
           </CardTitle>
           <CardDescription className="text-xs sm:text-sm">Revenue distribution by payment method</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
-            <div className="h-64 sm:h-80">
+        <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+            <div className="h-56 sm:h-64 md:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -143,25 +143,25 @@ export default function ReportsPage() {
                     ))}
                   </Pie>
                   <Tooltip formatter={(value: any) => formatCurrency(value)} />
-                  <Legend wrapperStyle={{ fontSize: '12px' }} />
+                  <Legend wrapperStyle={{ fontSize: '11px' }} />
                 </PieChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="space-y-3">
-              <h4 className="font-semibold text-gray-700 mb-4">Detailed Breakdown</h4>
+            <div className="space-y-2 sm:space-y-3">
+              <h4 className="font-semibold text-sm sm:text-base text-gray-700 dark:text-gray-300 mb-3 sm:mb-4">Detailed Breakdown</h4>
               {Object.entries(paymentModeBreakdown).map(([mode, amount], index) => (
-                <div key={mode} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
+                <div key={mode} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     <div 
-                      className="w-4 h-4 rounded-full" 
+                      className="w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0" 
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
                     />
-                    <span className="font-medium capitalize">{mode}</span>
+                    <span className="font-medium capitalize text-xs sm:text-sm dark:text-gray-100">{mode}</span>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold">{formatCurrency(amount)}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="font-bold text-xs sm:text-sm dark:text-gray-100">{formatCurrency(amount)}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {((amount / totalRevenue) * 100).toFixed(1)}%
                     </p>
                   </div>
@@ -181,9 +181,9 @@ export default function ReportsPage() {
             }`}
             onClick={() => setSelectedPeriod(period.value)}
           >
-            <CardHeader className="p-4 sm:p-6">
-              <CardTitle className="flex items-center space-x-2 text-sm sm:text-base">
-                <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+            <CardHeader className="p-3 sm:p-4 md:p-6">
+              <CardTitle className="flex items-center space-x-2 text-xs sm:text-sm md:text-base">
+                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                 <span>{period.label}</span>
               </CardTitle>
               <CardDescription className="text-xs">
@@ -195,40 +195,40 @@ export default function ReportsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Export Options</CardTitle>
-          <CardDescription>Choose your preferred export format</CardDescription>
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <CardTitle className="text-sm sm:text-base md:text-lg">Export Options</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Choose your preferred export format</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-4">
+        <CardContent className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4 md:p-6 pt-0">
           <Button
             onClick={handleGenerateReport}
             disabled={loading}
-            className="flex items-center space-x-2"
+            className="flex items-center justify-center space-x-2 w-full sm:w-auto"
           >
-            <FileText className="w-4 h-4" />
-            <span>{loading ? 'Generating...' : 'Export to PDF'}</span>
+            <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">{loading ? 'Generating...' : 'Export to PDF'}</span>
           </Button>
           <Button
             onClick={handleGenerateReport}
             disabled={loading}
             variant="outline"
-            className="flex items-center space-x-2"
+            className="flex items-center justify-center space-x-2 w-full sm:w-auto"
           >
-            <Download className="w-4 h-4" />
-            <span>{loading ? 'Generating...' : 'Export to Excel'}</span>
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="text-xs sm:text-sm">{loading ? 'Generating...' : 'Export to Excel'}</span>
           </Button>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Report Preview</CardTitle>
-          <CardDescription>Summary of the {selectedPeriod} report</CardDescription>
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <CardTitle className="text-sm sm:text-base md:text-lg">Report Preview</CardTitle>
+          <CardDescription className="text-xs sm:text-sm">Summary of the {selectedPeriod} report</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-12 text-gray-500">
-            <FileText className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <p>Select a period and click export to generate your report</p>
+        <CardContent className="p-3 sm:p-4 md:p-6 pt-0">
+          <div className="text-center py-8 sm:py-12 text-gray-500 dark:text-gray-400">
+            <FileText className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-3 sm:mb-4 text-gray-400 dark:text-gray-500" />
+            <p className="text-xs sm:text-sm">Select a period and click export to generate your report</p>
           </div>
         </CardContent>
       </Card>

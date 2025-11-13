@@ -44,7 +44,7 @@ export function DataTable<T extends { id: string | number }>({
           <TableHeader>
             <TableRow>
               {columns.map((column, index) => (
-                <TableHead key={index} className={`${column.className} whitespace-nowrap`}>
+                <TableHead key={index} className={`${column.className} whitespace-nowrap text-xs sm:text-sm`}>
                   {column.header}
                 </TableHead>
               ))}
@@ -55,7 +55,7 @@ export function DataTable<T extends { id: string | number }>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="text-center py-8 text-gray-500 dark:text-gray-400"
+                  className="text-center py-6 sm:py-8 text-xs sm:text-sm text-gray-500 dark:text-gray-400"
                 >
                   {emptyMessage}
                 </TableCell>
@@ -68,7 +68,7 @@ export function DataTable<T extends { id: string | number }>({
                   className={onRowClick ? 'cursor-pointer' : ''}
                 >
                   {columns.map((column, colIndex) => (
-                    <TableCell key={colIndex} className={column.className}>
+                    <TableCell key={colIndex} className={`${column.className} text-xs sm:text-sm py-2 sm:py-3`}>
                       {getCellContent(item, column)}
                     </TableCell>
                   ))}
