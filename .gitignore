@@ -32,6 +32,12 @@ yarn-error.log*
 firebase-admin-sdk.json
 *-firebase-adminsdk-*.json
 
+# Firebase rules and configuration (optional, uncomment if you want to ignore)
+# firestore.rules
+# storage.rules
+# firebase.json
+# .firebaserc
+
 # vercel
 .vercel
 
