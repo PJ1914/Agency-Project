@@ -1,7 +1,11 @@
 export interface Order {
   id: string;
   orderId: string;
+  organizationId: string;
+  customerId?: string; // Link to customer
   clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
   country: string;
   productId: string;
   productName: string;
@@ -13,8 +17,12 @@ export interface Order {
   notes?: string;
   inventoryDeducted: boolean;
   shipmentId?: string;
-  createdAt: Date | string;
-  updatedAt: Date | string;
+  transactionId?: string; // Link to payment
+  paymentStatus: 'unpaid' | 'partial' | 'paid';
+  paidAmount: number;
+  outstandingAmount: number;
+  createdAt: Date | string | any;
+  updatedAt: Date | string | any;
 }
 
 export interface OrderFormData {

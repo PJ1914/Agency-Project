@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useData } from '@/contexts/DataContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { Order } from '@/types/order.d';
+import { Customer } from '@/types/customer.d';
 import { DataTable } from '@/components/Table';
 import { Button } from '@/components/ui/button';
 import { Plus, Edit, Trash2, FileText } from 'lucide-react';
@@ -14,13 +14,52 @@ import { EditOrderModal } from '@/components/EditOrderModal';
 import { createNotification } from '@/lib/notifications';
 import { deductInventory, restoreInventory, autoCreateShipment } from '@/lib/inventoryManager';
 import { generateInvoicePDF } from '@/lib/invoiceGenerator';
+import { validateInvoiceSettings, formatValidationMessage } from '@/lib/invoiceHelpers';
+import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { Pagination } from '@/components/Pagination';
 
 export default function OrdersPage() {
-  const { orders, ordersLoading, ordersError, refetchOrders } = useData();
   const { currentOrganization } = useOrganization();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [preSelectedCustomer, setPreSelectedCustomer] = useState<Customer | null>(null);
+
+  // Check for pre-selected customer from navigation
+  useEffect(() => {
+    const customerData = sessionStorage.getItem('preSelectedCustomer');
+    if (customerData) {
+      try {
+        const customer = JSON.parse(customerData) as Customer;
+        setPreSelectedCustomer(customer);
+        setIsAddModalOpen(true);
+        // Clear after using
+        sessionStorage.removeItem('preSelectedCustomer');
+      } catch (error) {
+        console.error('Error parsing customer data:', error);
+      }
+    }
+  }, []);
+
+  // Use paginated data hook
+  const {
+    data: orders,
+    isLoading: ordersLoading,
+    error: ordersError,
+    page,
+    hasMore,
+    nextPage,
+    prevPage,
+    invalidate,
+    pageSize,
+  } = usePaginatedData<Order>({
+    collectionName: 'orders',
+    organizationId: currentOrganization?.id,
+    pageSize: 50,
+    orderByField: 'orderDate',
+    orderDirection: 'desc',
+    queryKey: ['orders', currentOrganization?.id || ''],
+  });
 
   const handleAdd = async (order: Partial<Order>) => {
     try {
@@ -61,7 +100,7 @@ export default function OrdersPage() {
         actionUrl: '/dashboard/orders',
       });
       
-      refetchOrders();
+      invalidate();
     } catch (error) {
       console.error('Error adding order:', error);
       throw error;
@@ -113,7 +152,7 @@ export default function OrdersPage() {
       }
       
       await updateDocument('orders', id, updatedOrder);
-      refetchOrders();
+      invalidate();
     } catch (error) {
       console.error('Error updating order:', error);
       throw error;
@@ -123,7 +162,7 @@ export default function OrdersPage() {
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this order?')) {
       await deleteDocument('orders', id);
-      refetchOrders();
+      invalidate();
     }
   };
 
@@ -134,8 +173,27 @@ export default function OrdersPage() {
         return;
       }
 
+      // Validate invoice settings
+      const validation = validateInvoiceSettings(currentOrganization);
+      if (!validation.isValid) {
+        const message = formatValidationMessage(validation);
+        const proceed = confirm(
+          `⚠️ Invoice Settings Incomplete\n\n${message}\n\nDo you want to generate the invoice anyway?`
+        );
+        if (!proceed) return;
+      } else if (validation.warnings.length > 0) {
+        console.warn('⚠️ Invoice settings have some optional fields missing:', validation.warnings);
+      }
+
       // Get invoice settings from organization
-      const invoiceConfig = currentOrganization.settings?.invoice || {};
+      const invoiceConfig = (currentOrganization.settings?.invoice as any) || {};
+
+      // Use invoice settings or fallback to organization settings
+      const companyName = invoiceConfig.companyName || currentOrganization.name;
+      const companyAddress = invoiceConfig.companyAddress || currentOrganization.address || 'Address not set';
+      const companyPhone = invoiceConfig.companyPhone || currentOrganization.phone || 'Phone not set';
+      const companyEmail = invoiceConfig.companyEmail || currentOrganization.email || 'Email not set';
+      const companyGSTIN = invoiceConfig.gstin || 'GSTIN not set';
 
       // Prepare invoice data
       const invoiceData = {
@@ -143,7 +201,7 @@ export default function OrdersPage() {
         date: formatDate(order.orderDate),
         customerName: order.clientName,
         customerAddress: order.country,
-        salesMan: 'JAGAN HM', // You can make this dynamic
+        salesMan: 'Sales Representative', // You can make this dynamic from user profile
         items: [
           {
             product: order.productName,
@@ -154,18 +212,29 @@ export default function OrdersPage() {
             rate: order.amount / order.quantity,
             dis: 0,
             dis2: 0,
-            sgst: 2.5,
+            sgst: 2.5, // You can use invoiceConfig.taxRates.gst5 / 2
             cgst: 2.5,
             amount: order.amount
           }
         ],
-        organizationName: currentOrganization.name,
-        organizationAddress: currentOrganization.address || 'Address not set',
-        organizationPhone: currentOrganization.phone || 'Phone not set',
-        organizationEmail: currentOrganization.email || 'Email not set',
-        organizationGSTIN: invoiceConfig.gstin || (currentOrganization as any).gstin || 'GSTIN not set',
-        footerText: invoiceConfig.footerText
+        organizationName: companyName,
+        organizationAddress: companyAddress,
+        organizationPhone: companyPhone,
+        organizationEmail: companyEmail,
+        organizationGSTIN: companyGSTIN,
+        termsAndConditions: invoiceConfig.termsAndConditions || 'Goods once sold will not be taken back or exchanged.\nBills not due date will attract 24% interest.',
+        footerText: invoiceConfig.footerText || 'Thank you for your business!'
       };
+
+      console.log('📄 Generating invoice with settings:', {
+        companyName,
+        companyAddress,
+        companyPhone,
+        companyEmail,
+        companyGSTIN,
+        hasTerms: !!invoiceConfig.termsAndConditions,
+        hasFooter: !!invoiceConfig.footerText
+      });
 
       // Generate PDF
       const pdfBlob = await generateInvoicePDF(invoiceData);
@@ -188,9 +257,11 @@ export default function OrdersPage() {
         severity: 'info',
         actionRequired: false
       });
+
+      alert('✅ Invoice downloaded successfully!');
     } catch (error) {
       console.error('Error generating invoice:', error);
-      alert('Failed to generate invoice. Please try again.');
+      alert('Failed to generate invoice. Please check console for details.');
     }
   };
 
@@ -286,18 +357,32 @@ export default function OrdersPage() {
               <li>Refresh this page</li>
             </ol>
           </div>
-          <Button onClick={() => refetchOrders()} variant="outline" className="w-full sm:w-auto">
+          <Button onClick={() => invalidate()} variant="outline" className="w-full sm:w-auto">
             Try Again
           </Button>
         </div>
       ) : (
-        <DataTable data={orders} columns={columns} />
+        <>
+          <DataTable data={orders} columns={columns} />
+          <Pagination
+            currentPage={page}
+            onPageChange={(p) => p}
+            onNext={nextPage}
+            onPrev={prevPage}
+            hasMore={hasMore}
+            pageSize={pageSize}
+          />
+        </>
       )}
 
       <AddOrderModal 
         open={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+        onClose={() => {
+          setIsAddModalOpen(false);
+          setPreSelectedCustomer(null);
+        }} 
         onAdd={handleAdd}
+        preSelectedCustomer={preSelectedCustomer}
       />
 
       <EditOrderModal 

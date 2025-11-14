@@ -7,25 +7,40 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Order } from '@/types/order.d';
 import { InventoryItem } from '@/types/inventory.d';
+import { Customer } from '@/types/customer.d';
 import { useFirestore } from '@/hooks/useFirestore';
-import { AlertCircle, CheckCircle, Package } from 'lucide-react';
+import { useOrganization } from '@/contexts/OrganizationContext';
+import { AlertCircle, CheckCircle, Package, UserPlus, Search, QrCode } from 'lucide-react';
+import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { BarcodeScanner } from './BarcodeScanner';
 
 interface AddOrderModalProps {
   open: boolean;
   onClose: () => void;
   onAdd: (order: Partial<Order>) => Promise<void>;
+  preSelectedCustomer?: Customer | null;
 }
 
-export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
+export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: AddOrderModalProps) {
+  const { currentOrganization } = useOrganization();
   const [loading, setLoading] = useState(false);
   const { data: inventory } = useFirestore<InventoryItem>('inventory');
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [stockWarning, setStockWarning] = useState<string>('');
+  const [showCustomerPrompt, setShowCustomerPrompt] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const [formData, setFormData] = useState({
-    orderId: '',
+    orderId: `ORD-${Date.now().toString().slice(-6)}`,
+    customerId: '',
     clientName: '',
-    country: '',
+    clientPhone: '',
+    clientEmail: '',
+    country: 'India',
     productId: '',
     productName: '',
     quantity: '',
@@ -35,6 +50,118 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
     expectedDelivery: '',
     notes: '',
   });
+
+  // Generate next available Order ID
+  const generateNextOrderId = async (): Promise<string> => {
+    if (!currentOrganization?.id) return 'ORD-0001';
+
+    try {
+      // Fetch all existing orders for this organization
+      const ordersRef = collection(db, 'orders');
+      const q = query(
+        ordersRef,
+        where('organizationId', '==', currentOrganization.id)
+      );
+      const snapshot = await getDocs(q);
+      
+      // Extract existing order numbers
+      const existingNumbers = snapshot.docs
+        .map(doc => {
+          const orderId = doc.data().orderId as string;
+          // Extract number from format ORD-0001, ORD-0002, etc.
+          const match = orderId.match(/^ORD-(\d+)$/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(num => num > 0)
+        .sort((a, b) => a - b);
+
+      // Find the first available number (fill gaps first)
+      let nextNumber = 1;
+      for (const num of existingNumbers) {
+        if (num === nextNumber) {
+          nextNumber++;
+        } else if (num > nextNumber) {
+          // Found a gap, use it
+          break;
+        }
+      }
+
+      // Format with leading zeros (ORD-0001, ORD-0002, etc.)
+      return `ORD-${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating order ID:', error);
+      return `ORD-0001`;
+    }
+  };
+
+  // Load customers and generate order ID on open
+  useEffect(() => {
+    if (open && currentOrganization?.id) {
+      loadCustomers();
+      
+      // Generate next available order ID
+      generateNextOrderId().then(orderId => {
+        setFormData(prev => ({
+          ...prev,
+          orderId,
+        }));
+      });
+    }
+  }, [open, currentOrganization?.id]);
+
+  // Handle pre-selected customer from Customers page
+  useEffect(() => {
+    if (preSelectedCustomer) {
+      setSelectedCustomer(preSelectedCustomer);
+      setFormData(prev => ({
+        ...prev,
+        customerId: preSelectedCustomer.id,
+        clientName: preSelectedCustomer.name,
+        clientPhone: preSelectedCustomer.phone,
+        clientEmail: preSelectedCustomer.email || '',
+        country: preSelectedCustomer.country || 'India',
+      }));
+    }
+  }, [preSelectedCustomer]);
+
+  const loadCustomers = async () => {
+    if (!currentOrganization?.id) return;
+    
+    try {
+      const customersRef = collection(db, 'customers');
+      const q = query(
+        customersRef,
+        where('organizationId', '==', currentOrganization.id),
+        where('status', '==', 'active')
+      );
+      const snapshot = await getDocs(q);
+      const customersList = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Customer[];
+      
+      setCustomers(customersList);
+    } catch (error) {
+      console.error('Error loading customers:', error);
+    }
+  };
+
+  // Handle customer selection
+  const handleCustomerSelect = (customerId: string) => {
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      setSelectedCustomer(customer);
+      setFormData(prev => ({
+        ...prev,
+        customerId: customer.id,
+        clientName: customer.name,
+        clientPhone: customer.phone,
+        clientEmail: customer.email || '',
+        country: customer.country || 'India',
+      }));
+      setSearchTerm('');
+    }
+  };
 
   // Handle product selection
   useEffect(() => {
@@ -88,13 +215,40 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
       alert(`Cannot process order. Only ${selectedProduct.quantity} units available in stock.`);
       return;
     }
-    
+
     setLoading(true);
 
     try {
+      let customerDocId = formData.customerId;
+
+      // Check if customer exists or needs to be created
+      if (!customerDocId && formData.clientName) {
+        // Check if similar customer exists
+        const similarCustomer = customers.find(c => 
+          c.name.toLowerCase() === formData.clientName.toLowerCase() ||
+          (formData.clientPhone && c.phone === formData.clientPhone)
+        );
+
+        if (similarCustomer) {
+          // Use existing customer
+          customerDocId = similarCustomer.id;
+          setSelectedCustomer(similarCustomer);
+        } else {
+          // Create new customer and get the doc ID
+          const newCustomerDocId = await createNewCustomer();
+          if (newCustomerDocId) {
+            customerDocId = newCustomerDocId;
+          }
+        }
+      }
+
       await onAdd({
         orderId: formData.orderId,
+        organizationId: currentOrganization?.id,
+        customerId: customerDocId || undefined,
         clientName: formData.clientName,
+        clientPhone: formData.clientPhone,
+        clientEmail: formData.clientEmail,
         country: formData.country,
         productId: formData.productId,
         productName: formData.productName,
@@ -104,14 +258,21 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
         orderDate: new Date(formData.orderDate),
         expectedDelivery: formData.expectedDelivery ? new Date(formData.expectedDelivery) : undefined,
         notes: formData.notes || undefined,
-        inventoryDeducted: false, // Will be set to true after deduction
+        inventoryDeducted: false,
+        paymentStatus: 'unpaid',
+        paidAmount: 0,
+        outstandingAmount: parseFloat(formData.amount),
       });
 
-      // Reset form
+      // Reset form with new sequential Order ID
+      const nextOrderId = await generateNextOrderId();
       setFormData({
-        orderId: '',
+        orderId: nextOrderId,
+        customerId: '',
         clientName: '',
-        country: '',
+        clientPhone: '',
+        clientEmail: '',
+        country: 'India',
         productId: '',
         productName: '',
         quantity: '',
@@ -123,7 +284,9 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
       });
       
       setSelectedProduct(null);
+      setSelectedCustomer(null);
       setStockWarning('');
+      setShowCustomerPrompt(false);
       onClose();
     } catch (error) {
       console.error('Error adding order:', error);
@@ -133,13 +296,105 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
     }
   };
 
+  // Generate next available Customer ID
+  const generateNextCustomerId = async (): Promise<string> => {
+    if (!currentOrganization?.id) return 'CUST-0001';
+
+    try {
+      const customersRef = collection(db, 'customers');
+      const q = query(
+        customersRef,
+        where('organizationId', '==', currentOrganization.id)
+      );
+      const snapshot = await getDocs(q);
+      
+      // Extract existing customer numbers
+      const existingNumbers = snapshot.docs
+        .map(doc => {
+          const customerId = doc.data().customerId as string;
+          const match = customerId.match(/^CUST-(\d+)$/);
+          return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(num => num > 0)
+        .sort((a, b) => a - b);
+
+      // Find the first available number (fill gaps first)
+      let nextNumber = 1;
+      for (const num of existingNumbers) {
+        if (num === nextNumber) {
+          nextNumber++;
+        } else if (num > nextNumber) {
+          break;
+        }
+      }
+
+      return `CUST-${nextNumber.toString().padStart(4, '0')}`;
+    } catch (error) {
+      console.error('Error generating customer ID:', error);
+      return `CUST-0001`;
+    }
+  };
+
+  const createNewCustomer = async (): Promise<string | null> => {
+    if (!currentOrganization?.id) return null;
+
+    try {
+      const customerId = await generateNextCustomerId();
+      
+      const newCustomer: Partial<Customer> = {
+        customerId,
+        name: formData.clientName,
+        phone: formData.clientPhone || '',
+        email: formData.clientEmail || '',
+        country: formData.country || 'India',
+        type: 'new',
+        status: 'active',
+        totalOrders: 0,
+        totalPurchases: 0,
+        outstandingBalance: 0,
+        loyaltyPoints: 0,
+        discountPercentage: 0,
+        notes: [],
+        organizationId: currentOrganization.id,
+        createdBy: 'system',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      };
+
+      const docRef = await addDoc(collection(db, 'customers'), newCustomer);
+      
+      // Update form with new customer ID
+      setFormData(prev => ({ ...prev, customerId: docRef.id }));
+      
+      // Silently created - no alert needed
+      console.log('✅ Customer auto-created:', newCustomer.customerId, 'Doc ID:', docRef.id);
+      
+      // Reload customers list
+      loadCustomers();
+
+      return docRef.id; // Return the document ID
+    } catch (error) {
+      console.error('Error creating customer:', error);
+      return null;
+    }
+  };
+
+  // Filter customers based on search
+  const filteredCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    c.phone.includes(searchTerm) ||
+    (c.email && c.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    c.customerId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Order</DialogTitle>
           <DialogDescription>
-            Create a new order entry for tracking. Stock will be automatically deducted from inventory.
+            Create a new order entry. Select an existing customer for quick order creation, or enter new client details. 
+            New clients can be saved as customers to track their order history and outstanding balance.
           </DialogDescription>
         </DialogHeader>
 
@@ -153,22 +408,181 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
                 onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
                 placeholder="ORD-001"
                 required
+                className="bg-gray-50"
+                readOnly
               />
+              <p className="text-xs text-gray-500">Auto-generated</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="clientName">Client Name *</Label>
+              <Label htmlFor="country">Country *</Label>
               <Input
-                id="clientName"
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                placeholder="Client Name"
+                id="country"
+                value={formData.country}
+                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                placeholder="India"
                 required
               />
             </div>
 
+            {/* Customer Selection Section */}
             <div className="space-y-2 col-span-2">
-              <Label htmlFor="productId">Select Product *</Label>
+              <Label>Customer Selection</Label>
+              
+              {/* Search Field */}
+              <div className="relative">
+                <Input
+                  placeholder="🔍 Search existing customers by name, phone, or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-3"
+                  autoComplete="off"
+                />
+              </div>
+
+              {/* Customer Dropdown */}
+              {searchTerm && filteredCustomers.length > 0 && (
+                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white shadow-lg z-50 absolute w-full">
+                  {filteredCustomers.map((customer) => (
+                    <div
+                      key={customer.id}
+                      onClick={() => {
+                        handleCustomerSelect(customer.id);
+                        setSearchTerm('');
+                      }}
+                      className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{customer.name}</p>
+                          <p className="text-xs text-gray-600">{customer.phone}</p>
+                          {customer.email && (
+                            <p className="text-xs text-gray-500">{customer.email}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xs text-gray-500">{customer.customerId}</p>
+                          {customer.outstandingBalance > 0 && (
+                            <p className="text-xs text-red-600 font-medium">
+                              Due: ₹{customer.outstandingBalance.toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Customer Info Card */}
+              {selectedCustomer && (
+                <div className="mt-2 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                        {selectedCustomer.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-green-900">{selectedCustomer.name}</p>
+                        <p className="text-sm text-green-700">{selectedCustomer.phone}</p>
+                        {selectedCustomer.email && (
+                          <p className="text-xs text-green-600">{selectedCustomer.email}</p>
+                        )}
+                        <div className="flex gap-4 mt-2 text-xs">
+                          <span className="text-green-700">
+                            <strong>{selectedCustomer.totalOrders || 0}</strong> orders
+                          </span>
+                          <span className="text-green-700">
+                            <strong>₹{selectedCustomer.totalPurchases?.toLocaleString() || 0}</strong> spent
+                          </span>
+                          {selectedCustomer.outstandingBalance > 0 && (
+                            <span className="text-red-600 font-medium">
+                              <strong>₹{selectedCustomer.outstandingBalance.toLocaleString()}</strong> due
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedCustomer(null);
+                        setFormData({
+                          ...formData,
+                          customerId: '',
+                          clientName: '',
+                          clientPhone: '',
+                          clientEmail: '',
+                        });
+                      }}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      ✕ Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Manual Entry Fields (shown when no customer selected) */}
+              {!selectedCustomer && (
+                <div className="space-y-3 mt-3">
+                  <p className="text-sm text-gray-600 italic">
+                    Or enter new client details manually:
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="clientName">Client Name *</Label>
+                      <Input
+                        id="clientName"
+                        value={formData.clientName}
+                        onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                        placeholder="Client Name"
+                        required
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientPhone">Phone</Label>
+                      <Input
+                        id="clientPhone"
+                        value={formData.clientPhone}
+                        onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                        placeholder="+91 9876543210"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="clientEmail">Email</Label>
+                      <Input
+                        id="clientEmail"
+                        type="email"
+                        value={formData.clientEmail}
+                        onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
+                        placeholder="client@example.com"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2 col-span-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="productId">Select Product *</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBarcodeScanner(true)}
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  Scan Barcode
+                </Button>
+              </div>
               <select
                 id="productId"
                 value={formData.productId}
@@ -310,6 +724,18 @@ export function AddOrderModal({ open, onClose, onAdd }: AddOrderModalProps) {
           </DialogFooter>
         </form>
       </DialogContent>
+
+      {/* Barcode Scanner Modal */}
+      <BarcodeScanner
+        open={showBarcodeScanner}
+        onClose={() => setShowBarcodeScanner(false)}
+        mode="scan"
+        onProductScanned={(product) => {
+          setFormData({ ...formData, productId: product.id, productName: product.productName });
+          setSelectedProduct(product);
+          setShowBarcodeScanner(false);
+        }}
+      />
     </Dialog>
   );
 }

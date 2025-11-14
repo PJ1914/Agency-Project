@@ -2,13 +2,16 @@
 
 import { AuthProvider } from '@/contexts/AuthContext';
 import { OrganizationProvider } from '@/contexts/OrganizationContext';
+import { QueryProvider } from '@/providers/QueryProvider';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <OrganizationProvider>
-        {children}
-      </OrganizationProvider>
-    </AuthProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <OrganizationProvider>
+          {children}
+        </OrganizationProvider>
+      </AuthProvider>
+    </QueryProvider>
   );
 }

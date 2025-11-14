@@ -18,11 +18,19 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
   const [formData, setFormData] = useState({
     productName: '',
     sku: '',
+    barcode: '',
+    batchNumber: '',
+    expiryDate: '',
+    manufacturingDate: '',
     quantity: '',
     price: '',
     unitPrice: '',
     category: '',
     lowStockThreshold: '',
+    reorderPoint: '',
+    reorderQuantity: '',
+    supplierName: '',
+    leadTimeDays: '',
     description: '',
   });
 
@@ -42,11 +50,19 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
       await onAdd({
         productName: formData.productName,
         sku: formData.sku,
+        barcode: formData.barcode || undefined,
+        batchNumber: formData.batchNumber || undefined,
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
+        manufacturingDate: formData.manufacturingDate ? new Date(formData.manufacturingDate) : undefined,
         quantity: initialQuantity,
         price: priceValue,
         unitPrice: calculatedUnitPrice,
         category: formData.category || undefined,
         lowStockThreshold: formData.lowStockThreshold ? parseInt(formData.lowStockThreshold) : undefined,
+        reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint) : undefined,
+        reorderQuantity: formData.reorderQuantity ? parseInt(formData.reorderQuantity) : undefined,
+        supplierName: formData.supplierName || undefined,
+        leadTimeDays: formData.leadTimeDays ? parseInt(formData.leadTimeDays) : undefined,
         description: formData.description || undefined,
         history: [{
           id: Date.now().toString(),
@@ -64,11 +80,19 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
       setFormData({
         productName: '',
         sku: '',
+        barcode: '',
+        batchNumber: '',
+        expiryDate: '',
+        manufacturingDate: '',
         quantity: '',
         price: '',
         unitPrice: '',
         category: '',
         lowStockThreshold: '',
+        reorderPoint: '',
+        reorderQuantity: '',
+        supplierName: '',
+        leadTimeDays: '',
         description: '',
       });
 
@@ -112,6 +136,46 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                 placeholder="SKU-001"
                 required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="barcode">Barcode / QR Code</Label>
+              <Input
+                id="barcode"
+                value={formData.barcode}
+                onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
+                placeholder="1234567890123"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="batchNumber">Batch Number</Label>
+              <Input
+                id="batchNumber"
+                value={formData.batchNumber}
+                onChange={(e) => setFormData({ ...formData, batchNumber: e.target.value })}
+                placeholder="BATCH-2025-001"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="manufacturingDate">Manufacturing Date</Label>
+              <Input
+                id="manufacturingDate"
+                type="date"
+                value={formData.manufacturingDate}
+                onChange={(e) => setFormData({ ...formData, manufacturingDate: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="expiryDate">Expiry Date</Label>
+              <Input
+                id="expiryDate"
+                type="date"
+                value={formData.expiryDate}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
               />
             </div>
 
@@ -170,6 +234,49 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
                 value={formData.lowStockThreshold}
                 onChange={(e) => setFormData({ ...formData, lowStockThreshold: e.target.value })}
                 placeholder="10"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reorderPoint">Reorder Point</Label>
+              <Input
+                id="reorderPoint"
+                type="number"
+                value={formData.reorderPoint}
+                onChange={(e) => setFormData({ ...formData, reorderPoint: e.target.value })}
+                placeholder="Auto-calculated if empty"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reorderQuantity">Reorder Quantity</Label>
+              <Input
+                id="reorderQuantity"
+                type="number"
+                value={formData.reorderQuantity}
+                onChange={(e) => setFormData({ ...formData, reorderQuantity: e.target.value })}
+                placeholder="Suggested order size"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="supplierName">Supplier Name</Label>
+              <Input
+                id="supplierName"
+                value={formData.supplierName}
+                onChange={(e) => setFormData({ ...formData, supplierName: e.target.value })}
+                placeholder="Supplier name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="leadTimeDays">Lead Time (Days)</Label>
+              <Input
+                id="leadTimeDays"
+                type="number"
+                value={formData.leadTimeDays}
+                onChange={(e) => setFormData({ ...formData, leadTimeDays: e.target.value })}
+                placeholder="7"
               />
             </div>
           </div>

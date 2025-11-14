@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Organization, OrganizationMember } from '@/types/organization.d';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db, auth } from '@/lib/firebase';
 
 interface OrganizationContextType {
@@ -61,9 +61,15 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
       // Check if user is admin
       const isAdmin = currentUser.email === 'pranay.jumbarthi1905@gmail.com';
       
-      // If admin, load all organizations
+      // If admin, load all organizations (with pagination limit for performance)
       if (isAdmin) {
-        const orgsSnapshot = await getDocs(collection(db, 'organizations'));
+        // Load organizations with a reasonable limit
+        const orgsQuery = query(
+          collection(db, 'organizations'),
+          orderBy('createdAt', 'desc'),
+          limit(100) // Limit to 100 organizations for initial load
+        );
+        const orgsSnapshot = await getDocs(orgsQuery);
         console.log('Organizations snapshot size (admin):', orgsSnapshot.size);
         
         const orgs = orgsSnapshot.docs.map(doc => {

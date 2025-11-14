@@ -2,6 +2,7 @@ export interface Transaction {
   id: string;
   transactionId: string;
   orderId: string;
+  customerId?: string; // Link to customer
   clientName: string;
   amount: number;
   paymentMode: 'razorpay' | 'cash' | 'phonepe' | 'gpay' | 'bank-transfer' | 'upi' | 'other';
@@ -12,6 +13,7 @@ export interface Transaction {
   date: Date | string;
   remarks?: string;
   receiptUrl?: string;
+  organizationId?: string; // Organization identifier
   createdAt: Date | string;
   updatedAt: Date | string;
 }

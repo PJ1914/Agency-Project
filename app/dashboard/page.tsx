@@ -3,12 +3,14 @@
 import { StatCard } from '@/components/StatCard';
 import { ChartCard } from '@/components/ChartCard';
 import { useData } from '@/contexts/DataContext';
-import { Package, DollarSign, Truck, AlertCircle } from 'lucide-react';
+import { Package, DollarSign, Truck, AlertCircle, Zap, Brain } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   const { orders, transactions, shipments, inventory } = useData();
+  const router = useRouter();
 
   // Calculate statistics
   const totalOrders = orders.length;
@@ -134,9 +136,30 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
-      <div>
-        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
-        <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Track your business metrics in real-time</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
+          <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Track your business metrics in real-time</p>
+        </div>
+        
+        {/* Quick Access Buttons */}
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <button
+            onClick={() => router.push('/dashboard/ai-intelligence')}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <Brain size={18} />
+            <span className="text-sm font-medium">AI Intelligence</span>
+          </button>
+          
+          <button
+            onClick={() => router.push('/dashboard/integrations')}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
+          >
+            <Zap size={18} />
+            <span className="text-sm font-medium">Integrations</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}

@@ -28,11 +28,17 @@ export interface Organization {
     notifications?: boolean;
     twoFactorAuth?: boolean;
     invoice?: {
+      companyName?: string;
+      companyAddress?: string;
+      companyPhone?: string;
+      companyEmail?: string;
+      companyLogo?: string;
       gstin?: string;
       pan?: string;
       bankName?: string;
       accountNumber?: string;
       ifscCode?: string;
+      invoicePrefix?: string;
       termsAndConditions?: string;
       footerText?: string;
       taxRates?: {

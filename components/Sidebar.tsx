@@ -10,6 +10,7 @@ import {
   Truck,
   CreditCard,
   FileText,
+  Receipt,
   Settings,
   Menu,
   X,
@@ -17,6 +18,8 @@ import {
   User,
   Users,
   Shield,
+  BarChart3,
+  MessageSquare,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,10 +31,14 @@ const ADMIN_EMAIL = 'pranay.jumbarthi1905@gmail.com';
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Orders', href: '/dashboard/orders', icon: Package },
+  { name: 'Customers', href: '/dashboard/customers', icon: Users },
   { name: 'Inventory', href: '/dashboard/inventory', icon: Warehouse },
   { name: 'Shipments', href: '/dashboard/shipments', icon: Truck },
   { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+  { name: 'Invoices', href: '/dashboard/invoices', icon: Receipt },
+  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
   { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+  { name: 'AI Assistant', href: '/dashboard/ai-chatbot', icon: MessageSquare },
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 

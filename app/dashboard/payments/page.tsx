@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Transaction } from '@/types/transaction.d';
 import { Order } from '@/types/order.d';
 import { DataTable } from '@/components/Table';
@@ -11,11 +12,90 @@ import { AddPaymentModal } from '@/components/AddPaymentModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Filter } from 'lucide-react';
 import { createNotification, checkPendingPayments, checkFailedPayments } from '@/lib/notifications';
+import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { Pagination } from '@/components/Pagination';
 
 export default function PaymentsPage() {
-  const { transactions, transactionsLoading, transactionsError, refetchTransactions, orders } = useData();
+  const { orders } = useData();
+  const { currentOrganization } = useOrganization();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [filterMode, setFilterMode] = useState<string>('all');
+
+  // Use paginated data hook - only when organization is loaded
+  const {
+    data: transactions,
+    isLoading: transactionsLoading,
+    error: transactionsError,
+    page,
+    hasMore,
+    nextPage,
+    prevPage,
+    invalidate,
+    pageSize,
+  } = usePaginatedData<Transaction>({
+    collectionName: 'transactions',
+    organizationId: currentOrganization?.id,
+    pageSize: 50,
+    orderByField: 'date',
+    orderDirection: 'desc',
+    queryKey: ['transactions', currentOrganization?.id || ''],
+  });
+
+  // Debug logging
+  useEffect(() => {
+    console.log('Payments Debug:', {
+      organizationId: currentOrganization?.id,
+      transactionsCount: transactions.length,
+      isLoading: transactionsLoading,
+      error: transactionsError,
+      transactions: transactions.slice(0, 2), // Log first 2 transactions
+    });
+  }, [transactions, transactionsLoading, transactionsError, currentOrganization]);
+
+  // One-time migration: Add organizationId to transactions that don't have it
+  useEffect(() => {
+    const migrateTransactions = async () => {
+      if (!currentOrganization?.id) return;
+
+      try {
+        const { collection, query, where, getDocs, doc, updateDoc } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase');
+
+        // Find transactions without organizationId
+        const transactionsRef = collection(db, 'transactions');
+        const snapshot = await getDocs(transactionsRef);
+        
+        let migratedCount = 0;
+        const updates: Promise<void>[] = [];
+
+        snapshot.forEach((docSnapshot) => {
+          const data = docSnapshot.data();
+          if (!data.organizationId) {
+            // Add organizationId to transaction
+            const docRef = doc(db, 'transactions', docSnapshot.id);
+            updates.push(
+              updateDoc(docRef, {
+                organizationId: currentOrganization.id
+              })
+            );
+            migratedCount++;
+          }
+        });
+
+        if (updates.length > 0) {
+          await Promise.all(updates);
+          console.log(`✅ Migrated ${migratedCount} transactions with organizationId`);
+          // Refresh data after migration
+          invalidate();
+        }
+      } catch (error) {
+        console.error('Migration error:', error);
+      }
+    };
+
+    // Run migration once when component mounts with organization
+    migrateTransactions();
+  }, [currentOrganization?.id]); // Only run when org ID changes
 
   // Check for pending and failed payments on load
   useEffect(() => {
@@ -54,7 +134,7 @@ export default function PaymentsPage() {
         });
       }
       
-      await refetchTransactions();
+      invalidate();
     } catch (error) {
       console.error('Error adding payment:', error);
       throw error;
@@ -115,12 +195,26 @@ export default function PaymentsPage() {
 
   if (transactionsError) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-          <h3 className="text-red-800 font-semibold mb-2">Error Loading Payments</h3>
-          <p className="text-red-600 mb-4">{transactionsError.message || 'Unknown error occurred'}</p>
-          <Button onClick={refetchTransactions}>Retry</Button>
+      <div className="p-3 sm:p-4 md:p-6 space-y-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Payments</h1>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+          <h3 className="text-red-800 dark:text-red-400 font-semibold mb-2">Error Loading Payments</h3>
+          <p className="text-red-600 dark:text-red-400 mb-4">{(transactionsError as any)?.message || 'Unknown error occurred'}</p>
+          <Button onClick={invalidate}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="p-3 sm:p-4 md:p-6 space-y-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Payments</h1>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Loading organization...</div>
+          </div>
         </div>
       </div>
     );
@@ -212,12 +306,38 @@ export default function PaymentsPage() {
 
       {transactionsLoading ? (
         <div className="flex items-center justify-center py-12">
-          <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Loading payments...</div>
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+            <div className="text-sm sm:text-base text-gray-500 dark:text-gray-400">Loading payments...</div>
+          </div>
+        </div>
+      ) : filteredTransactions.length === 0 ? (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50 p-8 text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">No transactions found</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+            {transactions.length === 0 
+              ? "Start by recording your first payment transaction"
+              : "No transactions match the selected filter"}
+          </p>
+          <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center justify-center gap-2 mx-auto">
+            <Plus className="w-4 h-4" />
+            Record Payment
+          </Button>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50">
-          <DataTable data={filteredTransactions} columns={columns} />
-        </div>
+        <>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/50">
+            <DataTable data={filteredTransactions} columns={columns} />
+          </div>
+          <Pagination
+            currentPage={page}
+            onPageChange={(p) => p}
+            onNext={nextPage}
+            onPrev={prevPage}
+            hasMore={hasMore}
+            pageSize={pageSize}
+          />
+        </>
       )}
 
       <AddPaymentModal

@@ -75,11 +75,17 @@ export default function SettingsPage() {
   });
 
   const [invoiceSettings, setInvoiceSettings] = useState({
+    companyName: '',
+    companyAddress: '',
+    companyPhone: '',
+    companyEmail: '',
+    companyLogo: '',
     gstin: '',
     pan: '',
     bankName: '',
     accountNumber: '',
     ifscCode: '',
+    invoicePrefix: 'INV-',
     termsAndConditions: 'Goods once sold will not be taken back or exchanged.\nBills not due date will attract 24% interest.',
     footerText: '',
     taxRates: {
@@ -101,15 +107,22 @@ export default function SettingsPage() {
     
     // Load invoice settings from organization
     if (currentOrganization?.settings?.invoice) {
+      const invoice = currentOrganization.settings.invoice as any;
       setInvoiceSettings({
-        gstin: currentOrganization.settings.invoice.gstin || '',
-        pan: currentOrganization.settings.invoice.pan || '',
-        bankName: currentOrganization.settings.invoice.bankName || '',
-        accountNumber: currentOrganization.settings.invoice.accountNumber || '',
-        ifscCode: currentOrganization.settings.invoice.ifscCode || '',
-        termsAndConditions: currentOrganization.settings.invoice.termsAndConditions || 'Goods once sold will not be taken back or exchanged.\nBills not due date will attract 24% interest.',
-        footerText: currentOrganization.settings.invoice.footerText || '',
-        taxRates: currentOrganization.settings.invoice.taxRates || {
+        companyName: invoice.companyName || currentOrganization.name || '',
+        companyAddress: invoice.companyAddress || currentOrganization.address || '',
+        companyPhone: invoice.companyPhone || currentOrganization.phone || '',
+        companyEmail: invoice.companyEmail || currentOrganization.email || '',
+        companyLogo: invoice.companyLogo || '',
+        gstin: invoice.gstin || '',
+        pan: invoice.pan || '',
+        bankName: invoice.bankName || '',
+        accountNumber: invoice.accountNumber || '',
+        ifscCode: invoice.ifscCode || '',
+        invoicePrefix: invoice.invoicePrefix || 'INV-',
+        termsAndConditions: invoice.termsAndConditions || 'Goods once sold will not be taken back or exchanged.\nBills not due date will attract 24% interest.',
+        footerText: invoice.footerText || '',
+        taxRates: invoice.taxRates || {
           gst5: 5,
           gst12: 12,
           gst18: 18,
@@ -582,6 +595,94 @@ export default function SettingsPage() {
           <CardDescription>Configure invoice details and GST information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Company Information */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Company Information</h4>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <Label htmlFor="companyName" className="text-gray-700 dark:text-gray-300">Company Name</Label>
+                <Input
+                  id="companyName"
+                  type="text"
+                  placeholder="Your Company Name"
+                  value={invoiceSettings.companyName}
+                  onChange={(e) => updateInvoiceSettings('companyName', e.target.value)}
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <Label htmlFor="companyAddress" className="text-gray-700 dark:text-gray-300">Company Address</Label>
+                <textarea
+                  id="companyAddress"
+                  rows={3}
+                  placeholder="Street, City, State, PIN Code"
+                  value={invoiceSettings.companyAddress}
+                  onChange={(e) => updateInvoiceSettings('companyAddress', e.target.value)}
+                  className="mt-1 w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="companyPhone" className="text-gray-700 dark:text-gray-300">Company Phone</Label>
+                  <Input
+                    id="companyPhone"
+                    type="tel"
+                    placeholder="+91 1234567890"
+                    value={invoiceSettings.companyPhone}
+                    onChange={(e) => updateInvoiceSettings('companyPhone', e.target.value)}
+                    className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="companyEmail" className="text-gray-700 dark:text-gray-300">Company Email</Label>
+                  <Input
+                    id="companyEmail"
+                    type="email"
+                    placeholder="info@company.com"
+                    value={invoiceSettings.companyEmail}
+                    onChange={(e) => updateInvoiceSettings('companyEmail', e.target.value)}
+                    className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="companyLogo" className="text-gray-700 dark:text-gray-300">Company Logo URL (Optional)</Label>
+                <Input
+                  id="companyLogo"
+                  type="url"
+                  placeholder="https://example.com/logo.png or leave empty"
+                  value={invoiceSettings.companyLogo}
+                  onChange={(e) => updateInvoiceSettings('companyLogo', e.target.value)}
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Recommended: Square image, 200x200px minimum</p>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="dark:bg-gray-700" />
+
+          {/* Invoice Numbering */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Invoice Numbering</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="invoicePrefix" className="text-gray-700 dark:text-gray-300">Invoice Prefix</Label>
+                <Input
+                  id="invoicePrefix"
+                  type="text"
+                  placeholder="INV-"
+                  value={invoiceSettings.invoicePrefix}
+                  onChange={(e) => updateInvoiceSettings('invoicePrefix', e.target.value)}
+                  className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Example: INV-2024-001</p>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="dark:bg-gray-700" />
+
           {/* GST & Tax Information */}
           <div className="space-y-4">
             <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Tax Information</h4>

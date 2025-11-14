@@ -29,6 +29,7 @@ interface InvoiceData {
   organizationEmail: string;
   organizationGSTIN: string;
   footerText?: string;
+  termsAndConditions?: string;
 }
 
 export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Blob> {
@@ -219,17 +220,24 @@ export async function generateInvoicePDF(invoiceData: InvoiceData): Promise<Blob
   
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
-  doc.text('Goods once sold will not be taken back or exchanged.', 14, termsY + 5);
-  doc.text('Bills not due date will attract 24% interest.', 14, termsY + 10);
+  
+  // Use custom terms from settings or default
+  const terms = invoiceData.termsAndConditions || 'Goods once sold will not be taken back or exchanged.\nBills not due date will attract 24% interest.';
+  const termLines = terms.split('\n');
+  termLines.forEach((line, index) => {
+    doc.text(line, 14, termsY + 5 + (index * 5));
+  });
+  
+  const footerY = termsY + 5 + (termLines.length * 5) + 5;
   
   if (invoiceData.footerText) {
-    doc.text(invoiceData.footerText, 14, termsY + 15);
+    doc.text(invoiceData.footerText, 14, footerY);
   }
 
   // Signature
   doc.setFont('helvetica', 'bold');
-  doc.text(`For ${invoiceData.organizationName.toUpperCase()}`, pageWidth - 60, termsY + 15);
-  doc.text('Receiver', 14, termsY + 25);
+  doc.text(`For ${invoiceData.organizationName.toUpperCase()}`, pageWidth - 60, footerY);
+  doc.text('Receiver', 14, footerY + 10);
 
   return doc.output('blob');
 }

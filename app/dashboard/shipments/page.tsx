@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useData } from '@/contexts/DataContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Shipment } from '@/types/shipment.d';
 import { DataTable } from '@/components/Table';
 import { Button } from '@/components/ui/button';
@@ -10,16 +10,38 @@ import { formatDate, getStatusColor } from '@/lib/utils';
 import { addDocument, updateDocument, deleteDocument } from '@/lib/firestore';
 import { AddShipmentModal } from '@/components/AddShipmentModal';
 import { EditShipmentModal } from '@/components/EditShipmentModal';
+import { usePaginatedData } from '@/hooks/usePaginatedData';
+import { Pagination } from '@/components/Pagination';
 
 export default function ShipmentsPage() {
-  const { shipments, shipmentsLoading, shipmentsError, refetchShipments } = useData();
+  const { currentOrganization } = useOrganization();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
 
+  // Use paginated data hook
+  const {
+    data: shipments,
+    isLoading: shipmentsLoading,
+    error: shipmentsError,
+    page,
+    hasMore,
+    nextPage,
+    prevPage,
+    invalidate,
+    pageSize,
+  } = usePaginatedData<Shipment>({
+    collectionName: 'shipments',
+    organizationId: currentOrganization?.id,
+    pageSize: 50,
+    orderByField: 'shipDate',
+    orderDirection: 'desc',
+    queryKey: ['shipments', currentOrganization?.id || ''],
+  });
+
   const handleAdd = async (shipment: Partial<Shipment>) => {
     await addDocument('shipments', shipment);
-    refetchShipments();
+    invalidate();
   };
 
   const handleEdit = (shipment: Shipment) => {
@@ -29,13 +51,13 @@ export default function ShipmentsPage() {
 
   const handleUpdate = async (id: string, shipment: Partial<Shipment>) => {
     await updateDocument('shipments', id, shipment);
-    refetchShipments();
+    invalidate();
   };
 
   const handleDelete = async (id: string) => {
     if (confirm('Are you sure you want to delete this shipment?')) {
       await deleteDocument('shipments', id);
-      refetchShipments();
+      invalidate();
     }
   };
 
@@ -113,12 +135,22 @@ export default function ShipmentsPage() {
               <li>Refresh this page</li>
             </ol>
           </div>
-          <Button onClick={() => refetchShipments()} variant="outline" className="w-full sm:w-auto">
+          <Button onClick={() => invalidate()} variant="outline" className="w-full sm:w-auto">
             Try Again
           </Button>
         </div>
       ) : (
-        <DataTable data={shipments} columns={columns} />
+        <>
+          <DataTable data={shipments} columns={columns} />
+          <Pagination
+            currentPage={page}
+            onPageChange={(p) => p}
+            onNext={nextPage}
+            onPrev={prevPage}
+            hasMore={hasMore}
+            pageSize={pageSize}
+          />
+        </>
       )}
 
       <AddShipmentModal 
