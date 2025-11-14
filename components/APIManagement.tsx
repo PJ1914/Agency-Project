@@ -251,7 +251,7 @@ export default function APIManagement({ organizationId }: { organizationId: stri
 
         {apiKeys.length === 0 && (
           <div className="text-center py-12 text-gray-500">
-            No API keys created yet. Click "Create API Key" to get started.
+            No API keys created yet. Click &quot;Create API Key&quot; to get started.
           </div>
         )}
       </div>
@@ -259,7 +259,7 @@ export default function APIManagement({ organizationId }: { organizationId: stri
       {/* Create Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div className="p-6">
               <h3 className="text-xl font-bold mb-4">Create New API Key</h3>
               

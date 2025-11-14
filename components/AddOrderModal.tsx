@@ -389,10 +389,10 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 custom-scrollbar">
         <DialogHeader>
-          <DialogTitle>Add New Order</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-gray-900 dark:text-white">Add New Order</DialogTitle>
+          <DialogDescription className="text-gray-600 dark:text-gray-400">
             Create a new order entry. Select an existing customer for quick order creation, or enter new client details. 
             New clients can be saved as customers to track their order history and outstanding balance.
           </DialogDescription>
@@ -401,33 +401,34 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="orderId">Order ID *</Label>
+              <Label htmlFor="orderId" className="text-gray-700 dark:text-gray-300">Order ID *</Label>
               <Input
                 id="orderId"
                 value={formData.orderId}
                 onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
                 placeholder="ORD-001"
                 required
-                className="bg-gray-50"
+                className="bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 readOnly
               />
-              <p className="text-xs text-gray-500">Auto-generated</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Auto-generated</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" className="text-gray-700 dark:text-gray-300">Country *</Label>
               <Input
                 id="country"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 placeholder="India"
                 required
+                className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
               />
             </div>
 
             {/* Customer Selection Section */}
             <div className="space-y-2 col-span-2">
-              <Label>Customer Selection</Label>
+              <Label className="text-gray-700 dark:text-gray-300">Customer Selection</Label>
               
               {/* Search Field */}
               <div className="relative">
@@ -435,14 +436,14 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                   placeholder="🔍 Search existing customers by name, phone, or email..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-3"
+                  className="pl-3 dark:bg-gray-800 dark:text-white dark:border-gray-700"
                   autoComplete="off"
                 />
               </div>
 
               {/* Customer Dropdown */}
               {searchTerm && filteredCustomers.length > 0 && (
-                <div className="max-h-48 overflow-y-auto border border-gray-300 rounded-md bg-white shadow-lg z-50 absolute w-full">
+                <div className="max-h-48 overflow-y-auto border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 shadow-lg z-50 absolute w-full custom-scrollbar">
                   {filteredCustomers.map((customer) => (
                     <div
                       key={customer.id}
@@ -450,20 +451,20 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                         handleCustomerSelect(customer.id);
                         setSearchTerm('');
                       }}
-                      className="p-3 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                      className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer border-b dark:border-gray-700 last:border-b-0"
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <p className="font-medium text-sm">{customer.name}</p>
-                          <p className="text-xs text-gray-600">{customer.phone}</p>
+                          <p className="font-medium text-sm text-gray-900 dark:text-white">{customer.name}</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">{customer.phone}</p>
                           {customer.email && (
-                            <p className="text-xs text-gray-500">{customer.email}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-500">{customer.email}</p>
                           )}
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-gray-500">{customer.customerId}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{customer.customerId}</p>
                           {customer.outstandingBalance > 0 && (
-                            <p className="text-xs text-red-600 font-medium">
+                            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
                               Due: ₹{customer.outstandingBalance.toLocaleString()}
                             </p>
                           )}
@@ -476,27 +477,27 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
 
               {/* Selected Customer Info Card */}
               {selectedCustomer && (
-                <div className="mt-2 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="mt-2 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
                   <div className="flex items-start justify-between">
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-10 h-10 bg-green-600 dark:bg-green-700 rounded-full flex items-center justify-center text-white font-bold">
                         {selectedCustomer.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="font-medium text-green-900">{selectedCustomer.name}</p>
-                        <p className="text-sm text-green-700">{selectedCustomer.phone}</p>
+                        <p className="font-medium text-green-900 dark:text-green-100">{selectedCustomer.name}</p>
+                        <p className="text-sm text-green-700 dark:text-green-300">{selectedCustomer.phone}</p>
                         {selectedCustomer.email && (
-                          <p className="text-xs text-green-600">{selectedCustomer.email}</p>
+                          <p className="text-xs text-green-600 dark:text-green-400">{selectedCustomer.email}</p>
                         )}
                         <div className="flex gap-4 mt-2 text-xs">
-                          <span className="text-green-700">
+                          <span className="text-green-700 dark:text-green-300">
                             <strong>{selectedCustomer.totalOrders || 0}</strong> orders
                           </span>
-                          <span className="text-green-700">
+                          <span className="text-green-700 dark:text-green-300">
                             <strong>₹{selectedCustomer.totalPurchases?.toLocaleString() || 0}</strong> spent
                           </span>
                           {selectedCustomer.outstandingBalance > 0 && (
-                            <span className="text-red-600 font-medium">
+                            <span className="text-red-600 dark:text-red-400 font-medium">
                               <strong>₹{selectedCustomer.outstandingBalance.toLocaleString()}</strong> due
                             </span>
                           )}
@@ -528,12 +529,12 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
               {/* Manual Entry Fields (shown when no customer selected) */}
               {!selectedCustomer && (
                 <div className="space-y-3 mt-3">
-                  <p className="text-sm text-gray-600 italic">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 italic">
                     Or enter new client details manually:
                   </p>
                   <div className="grid grid-cols-3 gap-3">
                     <div className="space-y-2">
-                      <Label htmlFor="clientName">Client Name *</Label>
+                      <Label htmlFor="clientName" className="text-gray-700 dark:text-gray-300">Client Name *</Label>
                       <Input
                         id="clientName"
                         value={formData.clientName}
@@ -541,20 +542,22 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                         placeholder="Client Name"
                         required
                         autoComplete="off"
+                        className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="clientPhone">Phone</Label>
+                      <Label htmlFor="clientPhone" className="text-gray-700 dark:text-gray-300">Phone</Label>
                       <Input
                         id="clientPhone"
                         value={formData.clientPhone}
                         onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
                         placeholder="+91 9876543210"
                         autoComplete="off"
+                        className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="clientEmail">Email</Label>
+                      <Label htmlFor="clientEmail" className="text-gray-700 dark:text-gray-300">Email</Label>
                       <Input
                         id="clientEmail"
                         type="email"
@@ -562,6 +565,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                         onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
                         placeholder="client@example.com"
                         autoComplete="off"
+                        className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                       />
                     </div>
                   </div>
@@ -571,13 +575,13 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
 
             <div className="space-y-2 col-span-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="productId">Select Product *</Label>
+                <Label htmlFor="productId" className="text-gray-700 dark:text-gray-300">Select Product *</Label>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => setShowBarcodeScanner(true)}
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  className="text-blue-600 dark:text-blue-400 border-blue-600 dark:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                 >
                   <QrCode className="w-4 h-4 mr-2" />
                   Scan Barcode
@@ -588,7 +592,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                 value={formData.productId}
                 onChange={(e) => setFormData({ ...formData, productId: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               >
                 <option value="">-- Select Product --</option>
                 {inventory.map(item => (
@@ -598,12 +602,12 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                 ))}
               </select>
               {selectedProduct && (
-                <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                   <div className="flex items-start gap-2">
-                    <Package className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <Package className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5" />
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-900">{selectedProduct.productName}</p>
-                      <p className="text-xs text-blue-700 mt-1">
+                      <p className="text-sm font-medium text-blue-900 dark:text-blue-100">{selectedProduct.productName}</p>
+                      <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                         Available Stock: <strong>{selectedProduct.quantity} units</strong> | 
                         Unit Price: <strong>₹{selectedProduct.unitPrice || selectedProduct.price}</strong>
                       </p>
@@ -614,18 +618,19 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="country">Country *</Label>
+              <Label htmlFor="country" className="text-gray-700 dark:text-gray-300">Country *</Label>
               <Input
                 id="country"
                 value={formData.country}
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 placeholder="India"
                 required
+                className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantity *</Label>
+              <Label htmlFor="quantity" className="text-gray-700 dark:text-gray-300">Quantity *</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -635,12 +640,13 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                 placeholder="100"
                 required
                 disabled={!formData.productId}
+                className="dark:bg-gray-800 dark:text-white dark:border-gray-700 disabled:opacity-50"
               />
               {stockWarning && (
                 <div className={`flex items-start gap-2 p-2 rounded-lg text-sm ${
                   stockWarning.includes('Insufficient') 
-                    ? 'bg-red-50 text-red-700 border border-red-200' 
-                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800' 
+                    : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800'
                 }`}>
                   <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span>{stockWarning}</span>
@@ -649,7 +655,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="amount">Amount (₹) *</Label>
+              <Label htmlFor="amount" className="text-gray-700 dark:text-gray-300">Amount (₹) *</Label>
               <Input
                 id="amount"
                 type="number"
@@ -659,18 +665,18 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
                 placeholder="50000"
                 required
                 readOnly
-                className="bg-gray-50"
+                className="bg-gray-50 dark:bg-gray-800 dark:text-white dark:border-gray-700"
               />
-              <p className="text-xs text-gray-500">Auto-calculated based on quantity × unit price</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Auto-calculated based on quantity × unit price</p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status">Status *</Label>
+              <Label htmlFor="status" className="text-gray-700 dark:text-gray-300">Status *</Label>
               <select
                 id="status"
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-background dark:bg-gray-800 dark:text-white dark:border-gray-700 px-3 py-2 text-sm"
                 required
               >
                 <option value="pending">Pending</option>
@@ -682,35 +688,37 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="orderDate">Order Date *</Label>
+              <Label htmlFor="orderDate" className="text-gray-700 dark:text-gray-300">Order Date *</Label>
               <Input
                 id="orderDate"
                 type="date"
                 value={formData.orderDate}
                 onChange={(e) => setFormData({ ...formData, orderDate: e.target.value })}
                 required
+                className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expectedDelivery">Expected Delivery</Label>
+              <Label htmlFor="expectedDelivery" className="text-gray-700 dark:text-gray-300">Expected Delivery</Label>
               <Input
                 id="expectedDelivery"
                 type="date"
                 value={formData.expectedDelivery}
                 onChange={(e) => setFormData({ ...formData, expectedDelivery: e.target.value })}
+                className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
               />
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
+            <Label htmlFor="notes" className="text-gray-700 dark:text-gray-300">Notes</Label>
             <textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Additional notes..."
-              className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="flex min-h-[80px] w-full rounded-md border border-input bg-background dark:bg-gray-800 dark:text-white dark:border-gray-700 px-3 py-2 text-sm"
             />
           </div>
 

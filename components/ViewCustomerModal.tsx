@@ -130,7 +130,7 @@ export function ViewCustomerModal({ open, onClose, customer, onEdit, onCreateOrd
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <div>

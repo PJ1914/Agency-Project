@@ -119,7 +119,7 @@ export function InventoryHistoryModal({ open, onClose, item }: InventoryHistoryM
         </div>
 
         {/* History Timeline */}
-        <div className="flex-1 overflow-y-auto space-y-3 py-4">
+        <div className="flex-1 overflow-y-auto space-y-3 py-4 custom-scrollbar">
           {sortedHistory.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <Package className="w-12 h-12 mx-auto mb-3 text-gray-400" />

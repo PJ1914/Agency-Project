@@ -74,7 +74,7 @@ export function AddCustomerModal({ open, onClose, onAdd }: AddCustomerModalProps
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle>Add New Customer</DialogTitle>
           <DialogDescription>Create a new customer profile</DialogDescription>
@@ -225,7 +225,7 @@ export function AddCustomerModal({ open, onClose, onAdd }: AddCustomerModalProps
                 </select>
               </div>
               <div>
-                <Label htmlFor="discountPercentage">Discount %</Label>
+                <Label htmlFor="discountPercentage" className="text-gray-700 dark:text-gray-300">Discount %</Label>
                 <Input
                   id="discountPercentage"
                   type="number"
@@ -234,10 +234,11 @@ export function AddCustomerModal({ open, onClose, onAdd }: AddCustomerModalProps
                   max="100"
                   value={formData.discountPercentage}
                   onChange={(e) => setFormData({ ...formData, discountPercentage: parseFloat(e.target.value) || 0 })}
+                  className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div>
-                <Label htmlFor="creditLimit">Credit Limit</Label>
+                <Label htmlFor="creditLimit" className="text-gray-700 dark:text-gray-300">Credit Limit</Label>
                 <Input
                   id="creditLimit"
                   type="number"
@@ -245,6 +246,7 @@ export function AddCustomerModal({ open, onClose, onAdd }: AddCustomerModalProps
                   min="0"
                   value={formData.creditLimit}
                   onChange={(e) => setFormData({ ...formData, creditLimit: parseFloat(e.target.value) || 0 })}
+                  className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
             </div>

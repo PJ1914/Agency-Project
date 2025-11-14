@@ -265,7 +265,7 @@ export default function AIDashboard({ organizationId }: { organizationId: string
             ) : insights.length === 0 ? (
               <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <FiBarChart2 size={48} className="mx-auto mb-4 opacity-50" />
-                <p>No insights available yet. Click "Refresh Insights" to generate.</p>
+                <p>No insights available yet. Click &quot;Refresh Insights&quot; to generate.</p>
               </div>
             ) : (
               <div className="space-y-4">

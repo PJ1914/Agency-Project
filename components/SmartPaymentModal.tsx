@@ -159,7 +159,7 @@ export function SmartPaymentModal({ open, onClose, onSuccess, preSelectedOrderId
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <CreditCard className="w-6 h-6" />
@@ -322,13 +322,13 @@ export function SmartPaymentModal({ open, onClose, onSuccess, preSelectedOrderId
                           </span>
                         </div>
                         <div className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-                          ⚠️ Order will be marked as "Partial Payment"
+                          ⚠️ Order will be marked as &quot;Partial Payment&quot;
                         </div>
                       </>
                     )}
                     {!isPartialPayment && paymentAmount > 0 && (
                       <div className="text-xs text-green-600 dark:text-green-400 mt-2">
-                          ✅ Order will be marked as "Fully Paid"
+                          ✅ Order will be marked as &quot;Fully Paid&quot;
                         </div>
                     )}
                     <div className="border-t border-green-300 dark:border-green-700 pt-2 mt-3 text-xs">

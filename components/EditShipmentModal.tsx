@@ -102,7 +102,7 @@ export function EditShipmentModal({ open, onClose, onUpdate, shipment }: EditShi
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle>Edit Shipment</DialogTitle>
           <DialogDescription>

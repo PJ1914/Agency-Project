@@ -197,7 +197,7 @@ export function SmartOrderModal({ open, onClose, onSuccess }: SmartOrderModalPro
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-2xl flex items-center gap-2">
             <ShoppingCart className="w-6 h-6" />

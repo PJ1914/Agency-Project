@@ -147,7 +147,7 @@ export function NotificationBell() {
               </div>
             </div>
 
-            <div className="overflow-y-auto flex-1 bg-white">
+            <div className="overflow-y-auto flex-1 bg-white custom-scrollbar">
               {notificationsLoading ? (
                 <div className="p-6 sm:p-8 text-center text-gray-500">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>

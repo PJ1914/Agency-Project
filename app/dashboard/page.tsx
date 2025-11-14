@@ -141,25 +141,6 @@ export default function DashboardPage() {
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Dashboard Overview</h1>
           <p className="text-xs sm:text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">Track your business metrics in real-time</p>
         </div>
-        
-        {/* Quick Access Buttons */}
-        <div className="flex flex-wrap gap-2 sm:gap-3">
-          <button
-            onClick={() => router.push('/dashboard/ai-intelligence')}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg hover:from-purple-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg"
-          >
-            <Brain size={18} />
-            <span className="text-sm font-medium">AI Intelligence</span>
-          </button>
-          
-          <button
-            onClick={() => router.push('/dashboard/integrations')}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-600 to-teal-600 text-white rounded-lg hover:from-green-700 hover:to-teal-700 transition-all shadow-md hover:shadow-lg"
-          >
-            <Zap size={18} />
-            <span className="text-sm font-medium">Integrations</span>
-          </button>
-        </div>
       </div>
 
       {/* Stats Grid */}

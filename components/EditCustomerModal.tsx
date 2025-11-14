@@ -47,7 +47,7 @@ export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCus
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle>Edit Customer</DialogTitle>
           <DialogDescription>Update customer information</DialogDescription>
@@ -210,7 +210,7 @@ export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCus
                 </select>
               </div>
               <div>
-                <Label htmlFor="edit-discountPercentage">Discount %</Label>
+                <Label htmlFor="edit-discountPercentage" className="text-gray-700 dark:text-gray-300">Discount %</Label>
                 <Input
                   id="edit-discountPercentage"
                   type="number"
@@ -219,10 +219,11 @@ export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCus
                   max="100"
                   value={formData.discountPercentage || 0}
                   onChange={(e) => setFormData({ ...formData, discountPercentage: parseFloat(e.target.value) || 0 })}
+                  className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-creditLimit">Credit Limit</Label>
+                <Label htmlFor="edit-creditLimit" className="text-gray-700 dark:text-gray-300">Credit Limit</Label>
                 <Input
                   id="edit-creditLimit"
                   type="number"
@@ -230,10 +231,11 @@ export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCus
                   min="0"
                   value={formData.creditLimit || 0}
                   onChange={(e) => setFormData({ ...formData, creditLimit: parseFloat(e.target.value) || 0 })}
+                  className="dark:bg-gray-800 dark:text-white dark:border-gray-700"
                 />
               </div>
               <div>
-                <Label htmlFor="edit-outstandingBalance">Outstanding Balance</Label>
+                <Label htmlFor="edit-outstandingBalance" className="text-gray-700 dark:text-gray-300">Outstanding Balance</Label>
                 <Input
                   id="edit-outstandingBalance"
                   type="number"

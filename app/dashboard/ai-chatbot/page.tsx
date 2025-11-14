@@ -226,9 +226,9 @@ export default function AIChatbotPage() {
   ];
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
+    <div className="flex flex-col h-full bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 overflow-hidden">
       {/* Modern Header */}
-      <div className="sticky top-0 z-10 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
+      <div className="flex-shrink-0 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
@@ -258,7 +258,7 @@ export default function AIChatbotPage() {
       </div>
 
       {/* Chat Messages Container */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {chatMessages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-[calc(100vh-250px)] sm:min-h-[calc(100vh-300px)] space-y-6 sm:space-y-8 px-4">
@@ -293,7 +293,7 @@ export default function AIChatbotPage() {
                           {suggestion.title}
                         </div>
                         <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                          "{suggestion.prompt}"
+                          &quot;{suggestion.prompt}&quot;
                         </div>
                       </div>
                     </div>
@@ -461,7 +461,7 @@ export default function AIChatbotPage() {
       </div>
         
       {/* Modern Input Section */}
-      <div className="sticky bottom-0 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-t border-gray-200/50 dark:border-gray-700/50">
+      <div className="flex-shrink-0 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80 border-t border-gray-200/50 dark:border-gray-700/50">
         <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-4">
           <form onSubmit={handleChatSubmit} className="relative w-full">
             <div className="relative flex items-end gap-1.5 sm:gap-2 p-1.5 sm:p-2 bg-white dark:bg-gray-800 rounded-2xl sm:rounded-3xl shadow-lg border border-gray-200 dark:border-gray-700 focus-within:ring-2 focus-within:ring-blue-500/50 focus-within:border-blue-500 transition-all w-full">
@@ -478,8 +478,7 @@ export default function AIChatbotPage() {
                 placeholder="Ask me anything..."
                 disabled={isChatLoading}
                 rows={1}
-                className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 px-2 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-[15px] leading-6 max-h-[200px] disabled:opacity-50"
-                style={{ scrollbarWidth: 'thin' }}
+                className="flex-1 min-w-0 bg-transparent border-none focus:outline-none focus:ring-0 resize-none text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 px-2 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-[15px] leading-6 max-h-[200px] disabled:opacity-50 custom-scrollbar"
               />
               
               <button

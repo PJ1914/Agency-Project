@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 import { 
   Package, 
   TrendingUp, 
@@ -40,7 +41,13 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <Package className="h-8 w-8 text-indigo-600" />
+              <Image
+                src="/TapasyaFlow-Logo.png"
+                alt="TapasyaFlow Logo"
+                width={40}
+                height={40}
+                className="rounded-lg"
+              />
               <span className="ml-2 text-xl font-bold text-gray-900">TapasyaFlow</span>
             </div>
             <div className="flex items-center space-x-4">

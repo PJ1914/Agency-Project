@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import Image from 'next/image';
 import {
   LayoutDashboard,
   Package,
@@ -20,6 +21,10 @@ import {
   Shield,
   BarChart3,
   MessageSquare,
+  ChevronDown,
+  ChevronRight,
+  Brain,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,21 +33,60 @@ import { OrganizationSwitcher } from './OrganizationSwitcher';
 
 const ADMIN_EMAIL = 'pranay.jumbarthi1905@gmail.com';
 
-const navigation = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Orders', href: '/dashboard/orders', icon: Package },
-  { name: 'Customers', href: '/dashboard/customers', icon: Users },
-  { name: 'Inventory', href: '/dashboard/inventory', icon: Warehouse },
-  { name: 'Shipments', href: '/dashboard/shipments', icon: Truck },
-  { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
-  { name: 'Invoices', href: '/dashboard/invoices', icon: Receipt },
-  { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-  { name: 'Reports', href: '/dashboard/reports', icon: FileText },
-  { name: 'AI Assistant', href: '/dashboard/ai-chatbot', icon: MessageSquare },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+// Categorized navigation structure
+const navigationCategories = [
+  {
+    id: 'overview',
+    label: 'Overview',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    ]
+  },
+  {
+    id: 'operations',
+    label: 'Operations',
+    items: [
+      { name: 'Orders', href: '/dashboard/orders', icon: Package },
+      { name: 'Customers', href: '/dashboard/customers', icon: Users },
+      { name: 'Inventory', href: '/dashboard/inventory', icon: Warehouse },
+      { name: 'Shipments', href: '/dashboard/shipments', icon: Truck },
+    ]
+  },
+  {
+    id: 'finance',
+    label: 'Finance',
+    items: [
+      { name: 'Payments', href: '/dashboard/payments', icon: CreditCard },
+      { name: 'Invoices', href: '/dashboard/invoices', icon: Receipt },
+    ]
+  },
+  {
+    id: 'insights',
+    label: 'Insights',
+    items: [
+      { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+      { name: 'Reports', href: '/dashboard/reports', icon: FileText },
+    ]
+  },
+  {
+    id: 'ai',
+    label: 'AI & Automation',
+    items: [
+      { name: 'AI Assistant', href: '/dashboard/ai-chatbot', icon: MessageSquare },
+      { name: 'AI Intelligence', href: '/dashboard/ai-intelligence', icon: Brain },
+    ]
+  },
+  {
+    id: 'integrations',
+    label: 'Integrations',
+    items: [
+      { name: 'Integrations', href: '/dashboard/integrations', icon: Zap },
+    ]
+  },
 ];
 
 const bottomNavigation = [
+  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   { name: 'Account', href: '/dashboard/account', icon: User },
 ];
 
@@ -55,9 +99,20 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>([
+    'overview', 'operations', 'finance', 'insights', 'ai', 'integrations'
+  ]);
   const { currentOrganization } = useOrganization();
   
   const isAdmin = user?.email === ADMIN_EMAIL;
+
+  const toggleCategory = (categoryId: string) => {
+    setExpandedCategories(prev =>
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
+  };
 
   return (
     <>
@@ -89,13 +144,26 @@ export function Sidebar() {
       >
         <div className="p-6 border-b border-gray-700 dark:border-gray-800">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-xl sm:text-2xl font-bold truncate">
-                {isAdmin ? 'TapasyaFlow' : (currentOrganization?.name || 'TapasyaFlow')}
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1">
-                {isAdmin ? 'Admin Dashboard' : 'Business Management'}
-              </p>
+            <div className="flex-1 flex items-center gap-3">
+              {/* Logo */}
+              <div className="flex-shrink-0">
+                <Image
+                  src="/TapasyaFlow-Logo.png"
+                  alt="TapasyaFlow Logo"
+                  width={40}
+                  height={40}
+                  className="rounded-lg"
+                />
+              </div>
+              {/* Text */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl sm:text-2xl font-bold truncate">
+                  {isAdmin ? 'TapasyaFlow' : (currentOrganization?.name || 'TapasyaFlow')}
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-300 dark:text-gray-400 mt-1">
+                  {isAdmin ? 'Admin Dashboard' : 'Business Management'}
+                </p>
+              </div>
             </div>
             {/* Close button for mobile */}
             <button
@@ -115,26 +183,52 @@ export function Sidebar() {
           )}
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
+        <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto custom-scrollbar">
+          {navigationCategories.map((category) => {
+            const isExpanded = expandedCategories.includes(category.id);
             
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className={cn(
-                  'flex items-center px-4 py-3 rounded-lg transition-colors',
-                  isActive
-                    ? 'bg-primary text-white'
-                    : 'text-gray-300 hover:bg-secondary-foreground/10 hover:text-white'
+              <div key={category.id} className="mb-2">
+                {/* Category Header */}
+                <button
+                  onClick={() => toggleCategory(category.id)}
+                  className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-400 hover:text-gray-300 uppercase tracking-wider transition-colors"
+                >
+                  <span>{category.label}</span>
+                  {isExpanded ? (
+                    <ChevronDown className="w-4 h-4" />
+                  ) : (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </button>
+                
+                {/* Category Items */}
+                {isExpanded && (
+                  <div className="mt-1 space-y-1">
+                    {category.items.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = pathname === item.href;
+                      
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={cn(
+                            'flex items-center px-4 py-2.5 rounded-lg transition-colors text-sm',
+                            isActive
+                              ? 'bg-primary text-white font-medium'
+                              : 'text-gray-300 hover:bg-secondary-foreground/10 hover:text-white'
+                          )}
+                        >
+                          <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                          <span>{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              >
-                <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                <span className="font-medium">{item.name}</span>
-              </Link>
+              </div>
             );
           })}
         </nav>
@@ -142,13 +236,13 @@ export function Sidebar() {
         {/* Admin Navigation */}
         {isAdmin && (
           <div className="border-t border-gray-700 dark:border-gray-800">
-            <div className="px-4 py-2">
-              <div className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 <Shield className="w-4 h-4" />
-                Admin Area
+                Admin
               </div>
             </div>
-            <nav className="px-4 space-y-1">
+            <nav className="px-4 pb-2 space-y-1">
               {adminNavigation.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
@@ -159,14 +253,14 @@ export function Sidebar() {
                     href={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
-                      'flex items-center px-4 py-3 rounded-lg transition-colors',
+                      'flex items-center px-4 py-2.5 rounded-lg transition-colors text-sm',
                       isActive
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-indigo-600 text-white font-medium'
                         : 'text-gray-300 dark:text-gray-400 hover:bg-indigo-600/20 hover:text-white'
                     )}
                   >
-                    <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                    <span className="font-medium">{item.name}</span>
+                    <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                    <span>{item.name}</span>
                   </Link>
                 );
               })}
@@ -176,7 +270,7 @@ export function Sidebar() {
 
         {/* Bottom Navigation */}
         <div className="border-t border-gray-700 dark:border-gray-800">
-          <nav className="px-4 py-2 space-y-1">
+          <nav className="px-4 py-3 space-y-1">
             {bottomNavigation.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -187,14 +281,14 @@ export function Sidebar() {
                   href={item.href}
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={cn(
-                    'flex items-center px-4 py-3 rounded-lg transition-colors',
+                    'flex items-center px-4 py-2.5 rounded-lg transition-colors text-sm',
                     isActive
-                      ? 'bg-primary text-white'
+                      ? 'bg-primary text-white font-medium'
                       : 'text-gray-300 dark:text-gray-400 hover:bg-secondary-foreground/10 hover:text-white'
                   )}
                 >
-                  <Icon className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="font-medium">{item.name}</span>
+                  <Icon className="w-4 h-4 mr-3 flex-shrink-0" />
+                  <span>{item.name}</span>
                 </Link>
               );
             })}
