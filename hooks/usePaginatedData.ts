@@ -12,7 +12,7 @@ import {
   Query
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface PaginatedDataOptions {
   collectionName: string;
@@ -36,8 +36,20 @@ export function usePaginatedData<T extends { id: string }>({
   const [allPages, setAllPages] = useState<QueryDocumentSnapshot<DocumentData>[][]>([[]]);
   const queryClient = useQueryClient();
 
+  // Reset pagination when organizationId changes
+  useEffect(() => {
+    console.log(`🔄 [usePaginatedData] ${collectionName} - Organization changed to:`, organizationId);
+    setPage(0);
+    setLastVisible(null);
+    setAllPages([[]]);
+    // Invalidate queries for this collection to force refetch
+    queryClient.invalidateQueries({ queryKey });
+  }, [organizationId, collectionName]);
+
   const fetchPage = async (pageIndex: number): Promise<{ data: T[]; hasMore: boolean }> => {
     try {
+      console.log(`📦 [usePaginatedData] Fetching ${collectionName} page ${pageIndex} for org:`, organizationId);
+      
       let q: Query<DocumentData> = collection(db, collectionName);
 
       // Build query
@@ -45,6 +57,9 @@ export function usePaginatedData<T extends { id: string }>({
       
       if (organizationId) {
         constraints.push(where('organizationId', '==', organizationId));
+        console.log(`  ✓ Applied organizationId filter:`, organizationId);
+      } else {
+        console.warn(`  ⚠️  No organizationId provided for ${collectionName}!`);
       }
       
       constraints.push(orderBy(orderByField, orderDirection));
@@ -60,6 +75,8 @@ export function usePaginatedData<T extends { id: string }>({
 
       const snapshot = await getDocs(q);
       const docs = snapshot.docs;
+      
+      console.log(`  📊 Fetched ${docs.length} documents (showing ${Math.min(docs.length, pageSize)})`);
 
       // Store the current page's documents for pagination
       setAllPages(prev => {
@@ -73,6 +90,15 @@ export function usePaginatedData<T extends { id: string }>({
         id: doc.id,
         ...doc.data(),
       } as T));
+      
+      // Log sample of fetched items
+      if (items.length > 0) {
+        console.log(`  📝 Sample item:`, {
+          id: items[0].id,
+          name: (items[0] as any).productName || (items[0] as any).name,
+          organizationId: (items[0] as any).organizationId
+        });
+      }
 
       if (docs.length > 0) {
         setLastVisible(docs[Math.min(docs.length - 1, pageSize - 1)]);
@@ -88,7 +114,9 @@ export function usePaginatedData<T extends { id: string }>({
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [...queryKey, page],
     queryFn: () => fetchPage(page),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0, // Always fetch fresh data when organization changes
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes but mark as stale immediately
+    enabled: organizationId !== undefined, // Only fetch when organizationId is available
   });
 
   const nextPage = () => {

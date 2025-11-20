@@ -10,8 +10,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Building2, Plus, Shield, Edit, Trash2, X } from 'lucide-react';
-
-const ADMIN_EMAIL = 'pranay.jumbarthi1905@gmail.com';
+import { isSuperAdmin } from '@/lib/auth';
+import { CustomAlert } from '@/components/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 interface OrganizationFormData {
   name: string;
@@ -26,10 +27,12 @@ export default function OrganizationsManagePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { organizations, currentOrganization, switchOrganization, refetchOrganization } = useOrganization();
+  const { alertState, showAlert, showConfirm, closeAlert } = useCustomAlert();
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingOrgId, setEditingOrgId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState<OrganizationFormData>({
     name: '',
     slug: '',
@@ -39,18 +42,29 @@ export default function OrganizationsManagePage() {
     planType: 'premium',
   });
 
-  // Check if user is admin
+  // Check if user is super admin
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+    const checkAdmin = async () => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      const adminStatus = await isSuperAdmin(user.uid);
+      setIsAdmin(adminStatus);
+      
+      if (!adminStatus) {
+        showAlert({
+          type: 'error',
+          title: 'Access Denied',
+          message: 'Organizations page is admin only.',
+        });
+        router.push('/dashboard');
+        return;
+      }
+    };
     
-    if (user.email !== ADMIN_EMAIL) {
-      alert('Access denied. Organizations page is admin only.');
-      router.push('/dashboard');
-      return;
-    }
+    checkAdmin();
   }, [user, router]);
 
   const generateSlug = (name: string) => {
@@ -124,11 +138,18 @@ export default function OrganizationsManagePage() {
       });
       setIsAdding(false);
 
-      alert('Organization created successfully!');
+      showAlert({
+        type: 'success',
+        message: '✅ Organization created successfully!',
+      });
       router.push('/dashboard');
     } catch (error) {
       console.error('Error creating organization:', error);
-      alert('Failed to create organization. Please try again.');
+      showAlert({
+        type: 'error',
+        title: 'Failed',
+        message: 'Failed to create organization. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -140,7 +161,11 @@ export default function OrganizationsManagePage() {
       router.push('/dashboard');
     } catch (error) {
       console.error('Error switching organization:', error);
-      alert('Failed to switch organization');
+      showAlert({
+        type: 'error',
+        title: 'Failed',
+        message: 'Failed to switch organization',
+      });
     }
   };
 
@@ -201,40 +226,56 @@ export default function OrganizationsManagePage() {
       setIsEditing(false);
       setEditingOrgId(null);
 
-      alert('Organization updated successfully!');
+      showAlert({
+        type: 'success',
+        message: '✅ Organization updated successfully!',
+      });
     } catch (error) {
       console.error('Error updating organization:', error);
-      alert('Failed to update organization. Please try again.');
+      showAlert({
+        type: 'error',
+        message: 'Failed to update organization. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (orgId: string, orgName: string) => {
-    if (!confirm(`Are you sure you want to delete "${orgName}"? This action cannot be undone and will affect all users in this organization.`)) {
-      return;
-    }
+    showConfirm({
+      type: 'warning',
+      title: `Delete "${orgName}"`,
+      message: 'Are you sure you want to delete this organization? This action cannot be undone and will affect all users in this organization.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          await deleteDoc(doc(db, 'organizations', orgId));
+          await refetchOrganization();
+          
+          // If deleted org was current, switch to first available org
+          if (currentOrganization?.id === orgId && organizations.length > 1) {
+            const nextOrg = organizations.find(o => o.id !== orgId);
+            if (nextOrg) {
+              await switchOrganization(nextOrg.id);
+            }
+          }
 
-    try {
-      setLoading(true);
-      await deleteDoc(doc(db, 'organizations', orgId));
-      await refetchOrganization();
-      
-      // If deleted org was current, switch to first available org
-      if (currentOrganization?.id === orgId && organizations.length > 1) {
-        const nextOrg = organizations.find(o => o.id !== orgId);
-        if (nextOrg) {
-          await switchOrganization(nextOrg.id);
+          showAlert({
+            type: 'success',
+            message: '✅ Organization deleted successfully!',
+          });
+        } catch (error) {
+          console.error('Error deleting organization:', error);
+          showAlert({
+            type: 'error',
+            message: 'Failed to delete organization. Please try again.',
+          });
+        } finally {
+          setLoading(false);
         }
-      }
-
-      alert('Organization deleted successfully!');
-    } catch (error) {
-      console.error('Error deleting organization:', error);
-      alert('Failed to delete organization. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
   };
 
   const resetForm = () => {
@@ -252,7 +293,7 @@ export default function OrganizationsManagePage() {
   };
 
   // Show access denied if not admin
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center space-y-4">
@@ -268,7 +309,10 @@ export default function OrganizationsManagePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-8">
+    <>
+      <CustomAlert {...alertState} onClose={closeAlert} />
+      
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 p-8">
       <div className="max-w-6xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
@@ -519,6 +563,7 @@ export default function OrganizationsManagePage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

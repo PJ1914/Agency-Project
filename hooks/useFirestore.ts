@@ -13,35 +13,83 @@ export function useFirestore<T>(
   const [error, setError] = useState<Error | null>(null);
   const isMounted = useRef(true);
 
+  // Serialize constraints to detect changes
+  const constraintsKey = JSON.stringify(
+    constraints.map(c => {
+      // Extract the constraint type and value for comparison
+      const constraint = c as any;
+      return {
+        type: constraint.type,
+        fieldPath: constraint._field?.segments?.join('.'),
+        op: constraint.op,
+        value: constraint.value
+      };
+    })
+  );
+  
+  // Log constraint changes for debugging
+  useEffect(() => {
+    if (constraints.length > 0) {
+      const orgIdConstraint = constraints.find((c: any) => 
+        c._field?.segments?.includes('organizationId')
+      ) as any;
+      
+      if (orgIdConstraint) {
+        console.log(`🔄 [useFirestore] ${collectionName} - Organization filter:`, orgIdConstraint.value);
+      }
+    }
+  }, [constraintsKey, collectionName]);
+
   const fetchData = useCallback(async () => {
     if (!isMounted.current) return;
     
     try {
       setLoading(true);
       setError(null);
+      // Clear old data immediately when constraints change to prevent stale data display
+      setData([]);
+      
       const result = await firestoreService.getAll<T>(collectionName, constraints);
+      
+      // Log what was fetched for debugging
+      console.log(`📦 [useFirestore] ${collectionName} fetched ${result.length} items`);
+      
       if (isMounted.current) {
         setData(result);
       }
     } catch (err) {
       if (isMounted.current) {
         setError(err as Error);
+        setData([]); // Clear data on error
       }
     } finally {
       if (isMounted.current) {
         setLoading(false);
       }
     }
-  }, [collectionName]); // Removed constraints from dependencies
+  }, [collectionName, constraintsKey]); // Include constraintsKey to detect changes
 
   useEffect(() => {
     isMounted.current = true;
+    
+    // Don't fetch if constraints array is empty (no organizationId filter)
+    if (constraints.length === 0) {
+      console.warn(`⚠️  [useFirestore] Skipping fetch for ${collectionName} - no constraints provided`);
+      setData([]);
+      setLoading(false);
+      return;
+    }
+    
+    // Clear data when constraints change (organization switch)
+    setData([]);
+    setLoading(true);
+    
     fetchData();
     
     return () => {
       isMounted.current = false;
     };
-  }, [collectionName]); // Only re-fetch when collection name changes
+  }, [fetchData, constraints.length, collectionName]); // Re-fetch when fetchData changes (which includes constraints)
 
   const addItem = async (item: any) => {
     try {

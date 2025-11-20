@@ -148,6 +148,7 @@ export async function checkReorderRequirements(organizationId: string): Promise<
           message: `${suggestion.productName}: Current stock ${suggestion.currentStock} units. Suggested order: ${suggestion.suggestedOrderQuantity} units${suggestion.supplierName ? ` from ${suggestion.supplierName}` : ''}.`,
           severity: suggestion.urgency === 'critical' ? 'critical' : 'warning',
           inventoryId: suggestion.inventoryId,
+          organizationId: organizationId,
           actionRequired: true,
           actionUrl: '/dashboard/inventory',
         });

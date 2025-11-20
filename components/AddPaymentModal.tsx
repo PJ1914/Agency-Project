@@ -7,6 +7,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Transaction } from '@/types/transaction.d';
 import { Order } from '@/types/order.d';
+import { CustomAlert } from './CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 interface AddPaymentModalProps {
   open: boolean;
@@ -17,6 +19,7 @@ interface AddPaymentModalProps {
 
 export function AddPaymentModal({ open, onClose, onAdd, orders }: AddPaymentModalProps) {
   const [loading, setLoading] = useState(false);
+  const { alertState, showAlert, showConfirm, closeAlert } = useCustomAlert();
   const [formData, setFormData] = useState({
     orderId: '',
     clientName: '',
@@ -53,6 +56,38 @@ export function AddPaymentModal({ open, onClose, onAdd, orders }: AddPaymentModa
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if order is already fully paid
+    const selectedOrder = orders.find(o => o.orderId === formData.orderId);
+    if (selectedOrder && selectedOrder.paymentStatus === 'paid') {
+      showAlert({
+        type: 'warning',
+        title: 'Payment Already Recorded!',
+        message: `Order ${selectedOrder.orderId} is already fully paid.\n\nAmount: ₹${selectedOrder.amount.toLocaleString()}\nPaid: ₹${selectedOrder.paidAmount?.toLocaleString() || 0}\n\nPlease select a different order.`,
+      });
+      return;
+    }
+    
+    // Warn if payment exceeds outstanding amount
+    if (selectedOrder) {
+      const paymentAmount = parseFloat(formData.amount);
+      const outstanding = selectedOrder.outstandingAmount || selectedOrder.amount;
+      if (paymentAmount > outstanding) {
+        showConfirm({
+          type: 'warning',
+          title: 'Payment Exceeds Outstanding Amount!',
+          message: `Outstanding: ₹${outstanding.toLocaleString()}\nYou're paying: ₹${paymentAmount.toLocaleString()}\n\nDo you want to continue?`,
+          confirmText: 'Continue',
+          onConfirm: () => submitPayment(),
+        });
+        return;
+      }
+    }
+    
+    await submitPayment();
+  };
+
+  const submitPayment = async () => {
     setLoading(true);
 
     try {
@@ -85,14 +120,31 @@ export function AddPaymentModal({ open, onClose, onAdd, orders }: AddPaymentModa
       onClose();
     } catch (error) {
       console.error('Error adding payment:', error);
-      alert('Failed to add payment. Please try again.');
+      showAlert({
+        type: 'error',
+        title: 'Payment Failed',
+        message: 'Failed to add payment. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <>
+      <CustomAlert
+        open={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        confirmText={alertState.confirmText}
+        cancelText={alertState.cancelText}
+        showCancel={alertState.showCancel}
+      />
+      
+      <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
           <DialogTitle>Add Payment</DialogTitle>
@@ -225,5 +277,6 @@ export function AddPaymentModal({ open, onClose, onAdd, orders }: AddPaymentModa
         </form>
       </DialogContent>
     </Dialog>
+    </>
   );
 }

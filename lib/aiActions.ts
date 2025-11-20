@@ -21,7 +21,7 @@ const genAI = new GoogleGenerativeAI(apiKey || '');
 export interface AIActionResult {
   success: boolean;
   action: 'create' | 'read' | 'update' | 'delete' | 'none';
-  entity: 'order' | 'inventory' | 'customer' | 'invoice' | 'supplier' | 'none';
+  entity: 'order' | 'inventory' | 'customer' | 'invoice' | 'supplier' | 'transaction' | 'none';
   message: string;
   data?: any;
   requiresConfirmation?: boolean;
@@ -59,7 +59,7 @@ Respond in valid JSON format only:
 }
 
 For inventory entity, extract: name, category, price, stock, minStock, sku, supplier, description
-For customer entity, extract: name, email, phone, address, company
+For customer entity, extract: name, email, phone, alternatePhone, address, city, state, country, pincode, companyName, gstNumber, panNumber
 For order entity, extract: customerId, items, totalAmount, status, paymentStatus
 For invoice entity, extract: invoiceNumber, customerId, items, amount, dueDate
 
@@ -177,16 +177,46 @@ async function readInventory(data: any, organizationId: string): Promise<any[]> 
 
 // CRUD Operations for Customers
 async function createCustomer(data: any, organizationId: string): Promise<any> {
+  // Generate Customer ID
+  const customersRef = collection(db, 'customers');
+  const q = query(customersRef, where('organizationId', '==', organizationId), orderBy('createdAt', 'desc'), limit(1));
+  const snapshot = await getDocs(q);
+  
+  let newCustomerId = 'CUST-0001';
+  if (!snapshot.empty) {
+    const lastCustomer = snapshot.docs[0].data();
+    if (lastCustomer.customerId) {
+      const lastNumber = parseInt(lastCustomer.customerId.split('-')[1]);
+      newCustomerId = `CUST-${String(lastNumber + 1).padStart(4, '0')}`;
+    }
+  }
+
   const customerData = {
+    customerId: newCustomerId,
     name: data.name,
     email: data.email || '',
     phone: data.phone || '',
+    alternatePhone: data.alternatePhone || '',
     address: data.address || '',
-    company: data.company || '',
+    city: data.city || '',
+    state: data.state || '',
+    country: data.country || 'India',
+    pincode: data.pincode || '',
+    companyName: data.companyName || '',
+    gstNumber: data.gstNumber || '',
+    panNumber: data.panNumber || '',
+    type: 'new' as const,
+    status: 'active' as const,
+    discountPercentage: data.discountPercentage || 0,
+    creditLimit: data.creditLimit || 0,
+    tags: data.tags || [],
     organizationId,
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
     totalPurchases: 0,
+    totalOrders: 0,
+    outstandingBalance: 0,
+    loyaltyPoints: 0,
     lastPurchaseDate: null,
   };
 

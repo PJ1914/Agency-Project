@@ -44,6 +44,7 @@ export async function deductInventory(
         severity: 'critical',
         inventoryId: productId,
         orderId: orderId,
+        organizationId: inventoryData.organizationId,
         actionRequired: true,
         actionUrl: '/dashboard/inventory',
       });
@@ -95,6 +96,7 @@ export async function deductInventory(
         severity: newStock === 0 ? 'critical' : 'warning',
         inventoryId: productId,
         orderId: orderId,
+        organizationId: inventoryData.organizationId,
         actionRequired: true,
         actionUrl: '/dashboard/inventory',
       });
@@ -374,6 +376,7 @@ export async function autoCreateShipment(order: any): Promise<string | null> {
       severity: 'info',
       orderId: order.orderId,
       shipmentId: shipmentRef.id,
+      organizationId: order.organizationId,
       actionRequired: false,
       actionUrl: '/dashboard/shipments',
     });

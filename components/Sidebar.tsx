@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import {
   LayoutDashboard,
@@ -30,8 +30,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { OrganizationSwitcher } from './OrganizationSwitcher';
-
-const ADMIN_EMAIL = 'pranay.jumbarthi1905@gmail.com';
+import { isSuperAdmin } from '@/lib/auth';
 
 // Categorized navigation structure
 const navigationCategories = [
@@ -104,7 +103,13 @@ export function Sidebar() {
   ]);
   const { currentOrganization } = useOrganization();
   
-  const isAdmin = user?.email === ADMIN_EMAIL;
+  // Memoize admin check to prevent recalculation
+  const isAdmin = useMemo(() => {
+    if (user?.uid) {
+      return user.email ? (user.email.toLowerCase().endsWith('@admin.com') || user.email.toLowerCase() === 'pranay.jumbarthi1905@gmail.com') : false;
+    }
+    return false;
+  }, [user?.uid, user?.email]);
 
   const toggleCategory = (categoryId: string) => {
     setExpandedCategories(prev =>

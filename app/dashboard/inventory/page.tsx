@@ -21,9 +21,12 @@ import { updateInventoryWithHistory } from '@/lib/inventoryManager';
 import { getReorderSuggestions, checkReorderRequirements } from '@/lib/inventoryEnhancements';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { Pagination } from '@/components/Pagination';
+import { CustomAlert } from '@/components/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function InventoryPage() {
   const { currentOrganization } = useOrganization();
+  const { alertState, showAlert, showConfirm, closeAlert } = useCustomAlert();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -89,7 +92,11 @@ export default function InventoryPage() {
 
   const handleAdd = async (item: Partial<InventoryItem>) => {
     if (!currentOrganization?.id) {
-      alert('No organization selected');
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'No organization selected',
+      });
       return;
     }
     await addDocument('inventory', {
@@ -146,10 +153,16 @@ export default function InventoryPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this item?')) {
-      await deleteDocument('inventory', id);
-      invalidate();
-    }
+    showConfirm({
+      type: 'warning',
+      title: 'Delete Item',
+      message: 'Are you sure you want to delete this item?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        await deleteDocument('inventory', id);
+        invalidate();
+      },
+    });
   };
 
   const columns = [
@@ -218,7 +231,10 @@ export default function InventoryPage() {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+    <>
+      <CustomAlert {...alertState} onClose={closeAlert} />
+      
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       {/* Header with Smart Alerts Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
@@ -369,7 +385,11 @@ export default function InventoryPage() {
         suggestions={reorderSuggestions}
         onCreatePO={(suggestion) => {
           // Future: Navigate to PO creation page
-          alert(`Creating Purchase Order for ${suggestion.productName}\nQuantity: ${suggestion.suggestedOrderQuantity} units\nEst. Cost: ${formatCurrency(suggestion.estimatedCost)}`);
+          showAlert({
+            type: 'info',
+            title: `Purchase Order for ${suggestion.productName}`,
+            message: `Quantity: ${suggestion.suggestedOrderQuantity} units\nEst. Cost: ${formatCurrency(suggestion.estimatedCost)}`,
+          });
           setIsReorderModalOpen(false);
         }}
       />
@@ -388,6 +408,7 @@ export default function InventoryPage() {
         onClose={() => setIsQRGeneratorOpen(false)}
         product={selectedItem}
       />
-    </div>
+      </div>
+    </>
   );
 }

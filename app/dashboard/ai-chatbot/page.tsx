@@ -113,15 +113,109 @@ export default function AIChatbotPage() {
           isAction: true
         }]);
       } else if (actionResult.action !== 'none' && actionResult.success) {
-        // Action was successful, show result
+        // Action was successful, show result with user-friendly formatting
         let resultMessage = actionResult.message;
         
-        // Add data details if available
+        // Add user-friendly data details based on entity and action
         if (actionResult.data) {
-          if (Array.isArray(actionResult.data)) {
-            resultMessage += `\n\n**Results:**\n${JSON.stringify(actionResult.data, null, 2)}`;
-          } else {
-            resultMessage += `\n\n**Details:**\n${JSON.stringify(actionResult.data, null, 2)}`;
+          // CREATE operations
+          if (actionResult.action === 'create' && actionResult.entity === 'customer') {
+            const customer = actionResult.data;
+            resultMessage += `\n\n📋 **Customer Profile Created:**\n\n`;
+            resultMessage += `**Customer ID:** ${customer.customerId}\n\n`;
+            resultMessage += `**Basic Information:**\n`;
+            resultMessage += `- 👤 Name: ${customer.name}\n`;
+            if (customer.email) resultMessage += `- ✉️ Email: ${customer.email}\n`;
+            if (customer.phone) resultMessage += `- 📱 Phone: ${customer.phone}\n`;
+            if (customer.alternatePhone) resultMessage += `- 📞 Alt Phone: ${customer.alternatePhone}\n`;
+            
+            if (customer.companyName || customer.gstNumber) {
+              resultMessage += `\n**Business Details:**\n`;
+              if (customer.companyName) resultMessage += `- 🏢 Company: ${customer.companyName}\n`;
+              if (customer.gstNumber) resultMessage += `- 📄 GST: ${customer.gstNumber}\n`;
+              if (customer.panNumber) resultMessage += `- 🆔 PAN: ${customer.panNumber}\n`;
+            }
+            
+            if (customer.address || customer.city) {
+              resultMessage += `\n**Location:**\n`;
+              if (customer.address) resultMessage += `- 📍 Address: ${customer.address}\n`;
+              if (customer.city) resultMessage += `- 🏙️ City: ${customer.city}\n`;
+              if (customer.state) resultMessage += `- 📌 State: ${customer.state}\n`;
+              if (customer.country) resultMessage += `- 🌍 Country: ${customer.country}\n`;
+              if (customer.pincode) resultMessage += `- 📮 Pincode: ${customer.pincode}\n`;
+            }
+            
+            resultMessage += `\n✅ Customer has been added to your system and is ready for orders!`;
+            resultMessage += `\n\n*Note: You can edit additional details (like credit limit, discount, tags) manually from the Customers page.*`;
+          }
+          
+          // READ operations - show actual data
+          else if (actionResult.action === 'read' && Array.isArray(actionResult.data)) {
+            const count = actionResult.data.length;
+            
+            if (count > 0) {
+              // CUSTOMERS
+              if (actionResult.entity === 'customer') {
+                resultMessage += `\n\n👥 **Your Customers:**\n\n`;
+                actionResult.data.slice(0, 10).forEach((customer: any, index: number) => {
+                  resultMessage += `**${index + 1}. ${customer.name}**\n`;
+                  if (customer.phone) resultMessage += `- 📱 Phone: ${customer.phone}\n`;
+                  if (customer.email) resultMessage += `- ✉️ Email: ${customer.email}\n`;
+                  if (customer.totalPurchases) resultMessage += `- 💰 Total Purchases: ₹${customer.totalPurchases.toLocaleString()}\n`;
+                  if (customer.totalOrders) resultMessage += `- 📦 Orders: ${customer.totalOrders}\n`;
+                  if (customer.outstandingBalance > 0) resultMessage += `- 💳 Outstanding: ₹${customer.outstandingBalance.toLocaleString()}\n`;
+                  if (customer.type) resultMessage += `- ${customer.type === 'vip' ? '⭐ VIP Customer' : '👤 Regular Customer'}\n`;
+                  resultMessage += `\n`;
+                });
+                if (count > 10) resultMessage += `\n*...and ${count - 10} more customers*`;
+              }
+              
+              // INVENTORY
+              else if (actionResult.entity === 'inventory') {
+                resultMessage += `\n\n📦 **Inventory Items:**\n\n`;
+                actionResult.data.slice(0, 10).forEach((item: any, index: number) => {
+                  resultMessage += `**${index + 1}. ${item.name}**\n`;
+                  if (item.sku) resultMessage += `- 🏷️ SKU: ${item.sku}\n`;
+                  if (item.currentStock !== undefined) {
+                    const stockStatus = item.currentStock <= item.reorderPoint ? '⚠️ LOW STOCK' : '✅ In Stock';
+                    resultMessage += `- 📊 Stock: ${item.currentStock} units ${stockStatus}\n`;
+                  }
+                  if (item.price) resultMessage += `- 💵 Price: ₹${item.price.toLocaleString()}\n`;
+                  if (item.category) resultMessage += `- 📁 Category: ${item.category}\n`;
+                  resultMessage += `\n`;
+                });
+                if (count > 10) resultMessage += `\n*...and ${count - 10} more items*`;
+              }
+              
+              // ORDERS
+              else if (actionResult.entity === 'order') {
+                resultMessage += `\n\n📋 **Orders:**\n\n`;
+                actionResult.data.slice(0, 10).forEach((order: any, index: number) => {
+                  resultMessage += `**${index + 1}. Order ${order.orderId}**\n`;
+                  if (order.clientName) resultMessage += `- 👤 Customer: ${order.clientName}\n`;
+                  if (order.productName) resultMessage += `- 📦 Product: ${order.productName} (Qty: ${order.quantity})\n`;
+                  if (order.amount) resultMessage += `- 💰 Amount: ₹${order.amount.toLocaleString()}\n`;
+                  if (order.status) resultMessage += `- 📊 Status: ${order.status}\n`;
+                  if (order.orderDate) resultMessage += `- 📅 Date: ${new Date(order.orderDate).toLocaleDateString()}\n`;
+                  resultMessage += `\n`;
+                });
+                if (count > 10) resultMessage += `\n*...and ${count - 10} more orders*`;
+              }
+              
+              // TRANSACTIONS/PAYMENTS
+              else if (actionResult.entity === 'transaction') {
+                resultMessage += `\n\n💳 **Payment Transactions:**\n\n`;
+                actionResult.data.slice(0, 10).forEach((txn: any, index: number) => {
+                  resultMessage += `**${index + 1}. Transaction ${txn.transactionId}**\n`;
+                  if (txn.clientName) resultMessage += `- 👤 Customer: ${txn.clientName}\n`;
+                  if (txn.amount) resultMessage += `- 💰 Amount: ₹${txn.amount.toLocaleString()}\n`;
+                  if (txn.paymentMode) resultMessage += `- 💳 Method: ${txn.paymentMode}\n`;
+                  if (txn.status) resultMessage += `- ${txn.status === 'Success' ? '✅' : '⏳'} Status: ${txn.status}\n`;
+                  resultMessage += `\n`;
+                });
+                if (count > 10) resultMessage += `\n*...and ${count - 10} more transactions*`;
+              }
+            }
           }
         }
         

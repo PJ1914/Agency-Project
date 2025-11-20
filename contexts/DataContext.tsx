@@ -50,6 +50,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const organizationId = currentOrganization?.id;
 
   // Fetch data filtered by organization
+  // CRITICAL: These queries MUST include organizationId filter to prevent data leakage
   const { 
     data: orders, 
     loading: ordersLoading, 
@@ -84,11 +85,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
     error: notificationsError, 
     refetch: refetchNotifications 
   } = useFirestore<Notification>('notifications', organizationId ? [
-    where('organizationId', '==', organizationId),
-    where('read', '==', false)
-  ] : [where('read', '==', false)]);
+    where('organizationId', '==', organizationId)
+  ] : []);
 
-  const unreadNotificationsCount = notifications.length;
+  // Filter unread notifications for count
+  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+  
+  // Log data loading for debugging
+  useEffect(() => {
+    if (organizationId) {
+      console.log('📊 DataContext: Loading data for organization:', organizationId);
+      console.log('  - Orders:', orders.length);
+      console.log('  - Inventory:', inventory.length);
+      console.log('  - Transactions:', transactions.length);
+    }
+  }, [organizationId, orders.length, inventory.length, transactions.length]);
 
   const value = {
     orders,

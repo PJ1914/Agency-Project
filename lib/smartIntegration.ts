@@ -184,6 +184,7 @@ export async function createSmartOrder(orderData: Partial<Order>): Promise<{
       message: `Order ${orderData.orderId} created for ${orderData.clientName}. Amount: ₹${totalAmount.toLocaleString()}`,
       severity: 'info',
       orderId: orderData.orderId,
+      organizationId: orderData.organizationId,
       actionRequired: false,
       actionUrl: '/dashboard/orders',
     });
@@ -270,6 +271,7 @@ export async function processPayment(
         severity: 'success',
         orderId: order.orderId,
         transactionId,
+        organizationId: order.organizationId,
         actionRequired: false,
         actionUrl: '/dashboard/payments',
       });
@@ -345,6 +347,7 @@ export async function cancelSmartOrder(orderId: string, reason: string): Promise
       message: `Order ${order.orderId} cancelled. Reason: ${reason}`,
       severity: 'warning',
       orderId: order.orderId,
+      organizationId: order.organizationId,
       actionRequired: false,
       actionUrl: '/dashboard/orders',
     });

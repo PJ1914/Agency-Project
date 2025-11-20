@@ -5,6 +5,7 @@ export interface Notification {
   message: string;
   severity: 'info' | 'warning' | 'critical' | 'success';
   read: boolean;
+  organizationId?: string;
   orderId?: string;
   inventoryId?: string;
   shipmentId?: string;

@@ -12,6 +12,7 @@ import { AddPaymentModal } from '@/components/AddPaymentModal';
 import { Button } from '@/components/ui/button';
 import { Plus, Download, Filter } from 'lucide-react';
 import { createNotification, checkPendingPayments, checkFailedPayments } from '@/lib/notifications';
+import { updateOrderPaymentStatus } from '@/lib/customerHelpers';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { Pagination } from '@/components/Pagination';
 
@@ -108,6 +109,28 @@ export default function PaymentsPage() {
   const handleAddPayment = async (transaction: Omit<Transaction, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       await addDocument('transactions', transaction);
+      
+      // Update order payment status if payment is successful
+      if (transaction.status === 'Success' && currentOrganization?.id) {
+        await updateOrderPaymentStatus(transaction.orderId, currentOrganization.id);
+        
+        // Recalculate customer stats from the order
+        const { collection, query, where, getDocs } = await import('firebase/firestore');
+        const { db } = await import('@/lib/firebase');
+        const ordersQuery = query(
+          collection(db, 'orders'),
+          where('orderId', '==', transaction.orderId),
+          where('organizationId', '==', currentOrganization.id)
+        );
+        const ordersSnap = await getDocs(ordersQuery);
+        if (!ordersSnap.empty) {
+          const order = ordersSnap.docs[0].data();
+          if (order.customerId) {
+            const { recalculateCustomerStats } = await import('@/lib/customerHelpers');
+            await recalculateCustomerStats(order.customerId, currentOrganization.id);
+          }
+        }
+      }
       
       // Create notification based on payment status
       if (transaction.status === 'Pending') {

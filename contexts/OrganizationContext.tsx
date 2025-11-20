@@ -58,8 +58,27 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
 
       console.log('Current user email:', currentUser.email);
       
-      // Check if user is admin
-      const isAdmin = currentUser.email === 'pranay.jumbarthi1905@gmail.com';
+      // Check if user is super admin from Firestore data
+      let isAdmin = false;
+      
+      // Try to get admin status from appUsers collection
+      const appUserRef = doc(db, 'appUsers', currentUser.uid);
+      const appUserDoc = await getDoc(appUserRef);
+      
+      if (appUserDoc.exists()) {
+        const userData = appUserDoc.data();
+        isAdmin = userData.isSuperAdmin === true || userData.role === 'super-admin';
+      } else {
+        // Fallback to users collection
+        const userRef = doc(db, 'users', currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          isAdmin = userData.isSuperAdmin === true || userData.role === 'super-admin';
+        }
+      }
+      
+      console.log('User is super admin:', isAdmin);
       
       // If admin, load all organizations (with pagination limit for performance)
       if (isAdmin) {

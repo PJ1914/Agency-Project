@@ -624,7 +624,11 @@ async function getOrganizationSalesData(organizationId: string) {
 
 async function getOrganizationInventoryData(organizationId: string) {
   try {
-    const snapshot = await getDocs(collection(db, 'inventory'));
+    const inventoryQuery = query(
+      collection(db, 'inventory'),
+      where('organizationId', '==', organizationId)
+    );
+    const snapshot = await getDocs(inventoryQuery);
     
     return snapshot.docs.map(doc => {
       const data = doc.data();
@@ -646,7 +650,11 @@ async function getOrganizationInventoryData(organizationId: string) {
 
 async function getOrganizationCustomerData(organizationId: string) {
   try {
-    const snapshot = await getDocs(collection(db, 'customers'));
+    const customersQuery = query(
+      collection(db, 'customers'),
+      where('organizationId', '==', organizationId)
+    );
+    const snapshot = await getDocs(customersQuery);
     
     return {
       totalCustomers: snapshot.size,

@@ -12,8 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Plus, Trash2, Edit, Mail, Lock, User, Building2, UserCheck, UserX } from 'lucide-react';
 import { DataTable } from '@/components/Table';
-
-const ADMIN_EMAIL = 'pranay.jumbarthi1905@gmail.com';
+import { isSuperAdmin } from '@/lib/auth';
 
 interface User {
   id: string;
@@ -35,6 +34,7 @@ export default function AdminUsersPage() {
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -43,21 +43,33 @@ export default function AdminUsersPage() {
     role: 'user' as 'admin' | 'manager' | 'user',
   });
 
-  // Check if user is admin
+  // Check if user is super admin
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
+    const checkAdmin = async () => {
+      if (!user) {
+        router.push('/login');
+        return;
+      }
+      
+      const adminStatus = await isSuperAdmin(user.uid);
+      setIsAdmin(adminStatus);
+      
+      if (!adminStatus) {
+        alert('Access denied. Admin only.');
+        router.push('/dashboard');
+        return;
+      }
+    };
     
-    if (user.email !== ADMIN_EMAIL) {
-      alert('Access denied. Admin only.');
-      router.push('/dashboard');
-      return;
-    }
-
-    loadData();
+    checkAdmin();
   }, [user, router]);
+  
+  // Load data after admin check passes
+  useEffect(() => {
+    if (isAdmin) {
+      loadData();
+    }
+  }, [isAdmin]);
 
   const loadData = async () => {
     try {
@@ -234,7 +246,7 @@ export default function AdminUsersPage() {
     },
   ];
 
-  if (!user || user.email !== ADMIN_EMAIL) {
+  if (!user || !isAdmin) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">

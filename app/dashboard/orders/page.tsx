@@ -15,11 +15,15 @@ import { createNotification } from '@/lib/notifications';
 import { deductInventory, restoreInventory, autoCreateShipment } from '@/lib/inventoryManager';
 import { generateInvoicePDF } from '@/lib/invoiceGenerator';
 import { validateInvoiceSettings, formatValidationMessage } from '@/lib/invoiceHelpers';
+import { updateCustomerOnOrderCreate, updateCustomerOnOrderCancel } from '@/lib/customerHelpers';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { Pagination } from '@/components/Pagination';
+import { CustomAlert } from '@/components/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function OrdersPage() {
   const { currentOrganization } = useOrganization();
+  const { alertState, showAlert, showConfirm, closeAlert } = useCustomAlert();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -64,7 +68,11 @@ export default function OrdersPage() {
   const handleAdd = async (order: Partial<Order>) => {
     try {
       if (!currentOrganization?.id) {
-        alert('No organization selected');
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: 'No organization selected',
+        });
         return;
       }
 
@@ -76,7 +84,11 @@ export default function OrdersPage() {
       );
       
       if (!deductResult.success) {
-        alert(deductResult.message);
+        showAlert({
+          type: 'error',
+          title: 'Inventory Error',
+          message: deductResult.message,
+        });
         return;
       }
       
@@ -87,7 +99,17 @@ export default function OrdersPage() {
         organizationId: currentOrganization.id,
       };
       
-      await addDocument('orders', newOrder);
+      const orderId = await addDocument('orders', newOrder);
+      
+      // Update customer stats if customer is linked
+      if (order.customerId) {
+        await updateCustomerOnOrderCreate(
+          order.customerId,
+          order.amount!,
+          order.paidAmount || 0,
+          order.outstandingAmount || 0
+        );
+      }
       
       // Create notification for new order
       await createNotification({
@@ -139,6 +161,18 @@ export default function OrdersPage() {
         );
         
         if (restoreResult.success) {
+          // Update customer stats - reverse the order and recalculate
+          if (originalOrder.customerId && currentOrganization?.id) {
+            await updateCustomerOnOrderCancel(
+              originalOrder.customerId,
+              originalOrder.amount,
+              originalOrder.outstandingAmount
+            );
+            
+            const { recalculateCustomerStats } = await import('@/lib/customerHelpers');
+            await recalculateCustomerStats(originalOrder.customerId, currentOrganization.id);
+          }
+          
           await createNotification({
             type: 'order-created',
             title: 'Order Cancelled - Inventory Restored',
@@ -160,16 +194,26 @@ export default function OrdersPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this order?')) {
-      await deleteDocument('orders', id);
-      invalidate();
-    }
+    showConfirm({
+      type: 'warning',
+      title: 'Delete Order',
+      message: 'Are you sure you want to delete this order?',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        await deleteDocument('orders', id);
+        invalidate();
+      },
+    });
   };
 
   const handleGenerateInvoice = async (order: Order) => {
     try {
       if (!currentOrganization) {
-        alert('Organization not found');
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: 'Organization not found',
+        });
         return;
       }
 
@@ -177,10 +221,18 @@ export default function OrdersPage() {
       const validation = validateInvoiceSettings(currentOrganization);
       if (!validation.isValid) {
         const message = formatValidationMessage(validation);
-        const proceed = confirm(
-          `⚠️ Invoice Settings Incomplete\n\n${message}\n\nDo you want to generate the invoice anyway?`
-        );
-        if (!proceed) return;
+        const shouldContinue = await new Promise<boolean>((resolve) => {
+          showConfirm({
+            type: 'warning',
+            title: 'Invoice Settings Incomplete',
+            message: `⚠️ ${message}\n\nDo you want to generate the invoice anyway?`,
+            confirmText: 'Yes, Generate',
+            onConfirm: () => resolve(true),
+          });
+          // If they cancel, resolve false
+          setTimeout(() => resolve(false), 100);
+        });
+        if (!shouldContinue) return;
       } else if (validation.warnings.length > 0) {
         console.warn('⚠️ Invoice settings have some optional fields missing:', validation.warnings);
       }
@@ -258,10 +310,17 @@ export default function OrdersPage() {
         actionRequired: false
       });
 
-      alert('✅ Invoice downloaded successfully!');
+      showAlert({
+        type: 'success',
+        message: '✅ Invoice downloaded successfully!',
+      });
     } catch (error) {
       console.error('Error generating invoice:', error);
-      alert('Failed to generate invoice. Please check console for details.');
+      showAlert({
+        type: 'error',
+        title: 'Invoice Generation Failed',
+        message: 'Failed to generate invoice. Please check console for details.',
+      });
     }
   };
 
@@ -325,7 +384,10 @@ export default function OrdersPage() {
   ];
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
+    <>
+      <CustomAlert {...alertState} onClose={closeAlert} />
+      
+      <div className="space-y-4 sm:space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-gray-100">Orders</h1>
@@ -391,6 +453,7 @@ export default function OrdersPage() {
         onUpdate={handleUpdate}
         order={selectedOrder}
       />
-    </div>
+      </div>
+    </>
   );
 }

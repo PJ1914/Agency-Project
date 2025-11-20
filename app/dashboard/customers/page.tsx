@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrganization } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { Customer, CustomerType, CustomerStatus } from '@/types/customer.d';
 import { DataTable } from '@/components/Table';
 import { Button } from '@/components/ui/button';
@@ -26,22 +28,35 @@ import {
 } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { addDocument, updateDocument, deleteDocument } from '@/lib/firestore';
+import { updateCustomerOnOrderCreate, updateCustomerOnOrderCancel, recalculateAllCustomerStats, linkOrdersToCustomers } from '@/lib/customerHelpers';
 import { usePaginatedData } from '@/hooks/usePaginatedData';
 import { Pagination } from '@/components/Pagination';
 import { AddCustomerModal } from '@/components/AddCustomerModal';
 import { EditCustomerModal } from '@/components/EditCustomerModal';
 import { ViewCustomerModal } from '@/components/ViewCustomerModal';
+import { CustomAlert } from '@/components/CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 export default function CustomersPage() {
   const { currentOrganization } = useOrganization();
   const { user } = useAuth();
   const router = useRouter();
+  const { alertState, showAlert, showConfirm, closeAlert } = useCustomAlert();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [selectedType, setSelectedType] = useState<CustomerType | 'all'>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isRecalculating, setIsRecalculating] = useState(false);
+  const [realStats, setRealStats] = useState({
+    totalCustomers: 0,
+    vipCustomers: 0,
+    totalRevenue: 0,
+    avgRevenue: 0,
+    totalOutstanding: 0,
+    newCustomers: 0,
+  });
 
   // Navigate to orders with selected customer
   const handleCreateOrder = (customer: Customer) => {
@@ -82,24 +97,105 @@ export default function CustomersPage() {
     return matchesType && matchesSearch;
   });
 
-  // Calculate statistics
-  const stats = {
-    total: customers.length,
-    active: customers.filter(c => c.status === 'active').length,
-    vip: customers.filter(c => c.type === 'vip').length,
-    new: customers.filter(c => c.type === 'new').length,
-    totalRevenue: customers.reduce((sum, c) => sum + c.totalPurchases, 0),
-    averageOrderValue: customers.length > 0
-      ? customers.reduce((sum, c) => sum + c.totalPurchases, 0) / 
-        customers.reduce((sum, c) => sum + c.totalOrders, 0)
-      : 0,
-    totalOutstanding: customers.reduce((sum, c) => sum + c.outstandingBalance, 0),
+  // Fetch real-time statistics from all customers in Firestore
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!currentOrganization?.id) return;
+
+      try {
+        // Fetch ALL customers for accurate stats
+        const customersQuery = query(
+          collection(db, 'customers'),
+          where('organizationId', '==', currentOrganization.id)
+        );
+        const customersSnapshot = await getDocs(customersQuery);
+        const allCustomers = customersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+
+        // Calculate VIP threshold (customers with total purchases > 50000)
+        const VIP_THRESHOLD = 50000;
+        const vipCount = allCustomers.filter(c => c.totalPurchases >= VIP_THRESHOLD).length;
+
+        // Calculate totals
+        const totalRevenue = allCustomers.reduce((sum, c) => sum + (c.totalPurchases || 0), 0);
+        const totalOutstanding = allCustomers.reduce((sum, c) => sum + (c.outstandingBalance || 0), 0);
+        const newCustomersCount = allCustomers.filter(c => c.type === 'new').length;
+
+        setRealStats({
+          totalCustomers: allCustomers.length,
+          vipCustomers: vipCount,
+          totalRevenue,
+          avgRevenue: allCustomers.length > 0 ? totalRevenue / allCustomers.length : 0,
+          totalOutstanding,
+          newCustomers: newCustomersCount,
+        });
+      } catch (error) {
+        console.error('Error fetching customer stats:', error);
+      }
+    };
+
+    fetchStats();
+  }, [currentOrganization?.id, customers]); // Re-fetch when customers change
+
+  // Recalculate all customer stats from orders
+  const handleRecalculateStats = async () => {
+    if (!currentOrganization?.id) return;
+    
+    showConfirm({
+      type: 'info',
+      title: 'Recalculate Customer Statistics',
+      message: 'This will:\n1. Link orders to customers (by name/phone)\n2. Recalculate all customer statistics\n\nContinue?',
+      confirmText: 'Yes, Continue',
+      onConfirm: async () => {
+        setIsRecalculating(true);
+    try {
+      // First, link orders to customers
+      console.log('Step 1: Linking orders to customers...');
+      const linkResult = await linkOrdersToCustomers(currentOrganization.id);
+      
+      if (linkResult.success) {
+        console.log(`✅ Linked ${linkResult.linked} orders (${linkResult.alreadyLinked} already linked)`);
+      }
+
+      // Then recalculate stats
+      console.log('Step 2: Recalculating customer stats...');
+      const result = await recalculateAllCustomerStats(currentOrganization.id);
+      
+      if (result.success) {
+        showAlert({
+          type: 'success',
+          title: 'Statistics Updated!',
+          message: `✅ Successfully completed!\n\nOrders linked: ${linkResult.linked}\nCustomers updated: ${result.updated}\n${result.errors > 0 ? `Errors: ${result.errors}` : ''}`,
+        });
+        invalidate(); // Refresh the customer list
+      } else {
+        showAlert({
+          type: 'error',
+          title: 'Update Failed',
+          message: '❌ Failed to recalculate stats. Please try again.',
+        });
+      }
+      } catch (error) {
+        console.error('Error recalculating stats:', error);
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: '❌ An error occurred. Please check the console.',
+        });
+      } finally {
+        setIsRecalculating(false);
+      }
+    },
+    });
   };
 
   const handleAdd = async (customer: Partial<Customer>) => {
     try {
       if (!currentOrganization?.id || !user?.uid) {
-        alert('Organization or user not found');
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: 'Organization or user not found',
+        });
         return;
       }
 
@@ -125,10 +221,16 @@ export default function CustomersPage() {
 
       await addDocument('customers', newCustomer);
       invalidate();
-      alert('✅ Customer added successfully!');
+      showAlert({
+        type: 'success',
+        message: '✅ Customer added successfully!',
+      });
     } catch (error) {
       console.error('Error adding customer:', error);
-      alert('Failed to add customer. Please try again.');
+      showAlert({
+        type: 'error',
+        message: 'Failed to add customer. Please try again.',
+      });
     }
   };
 
@@ -181,24 +283,42 @@ export default function CustomersPage() {
         updatedAt: new Date(),
       });
       invalidate();
-      alert('✅ Customer updated successfully!');
+      showAlert({
+        type: 'success',
+        message: '✅ Customer updated successfully!',
+      });
     } catch (error) {
       console.error('Error updating customer:', error);
-      alert('Failed to update customer. Please try again.');
+      showAlert({
+        type: 'error',
+        message: 'Failed to update customer. Please try again.',
+      });
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this customer? This action cannot be undone.')) {
-      try {
-        await deleteDocument('customers', id);
-        invalidate();
-        alert('✅ Customer deleted successfully!');
-      } catch (error) {
-        console.error('Error deleting customer:', error);
-        alert('Failed to delete customer. Please try again.');
-      }
-    }
+    showConfirm({
+      type: 'warning',
+      title: 'Delete Customer',
+      message: 'Are you sure you want to delete this customer? This action cannot be undone.',
+      confirmText: 'Delete',
+      onConfirm: async () => {
+        try {
+          await deleteDocument('customers', id);
+          invalidate();
+          showAlert({
+            type: 'success',
+            message: '✅ Customer deleted successfully!',
+          });
+        } catch (error) {
+          console.error('Error deleting customer:', error);
+          showAlert({
+            type: 'error',
+            message: 'Failed to delete customer. Please try again.',
+          });
+        }
+      },
+    });
   };
 
   const getTypeColor = (type: CustomerType) => {
@@ -283,22 +403,22 @@ export default function CustomersPage() {
     { 
       header: 'Orders', 
       accessor: ((customer: Customer) => (
-        <span className="font-semibold text-gray-900 dark:text-gray-100">{customer.totalOrders}</span>
+        <span className="font-semibold text-gray-900 dark:text-gray-100">{customer.totalOrders || 0}</span>
       )) as any 
     },
     { 
       header: 'Total Purchases', 
       accessor: ((customer: Customer) => (
         <span className="font-semibold text-gray-900 dark:text-gray-100">
-          {formatCurrency(customer.totalPurchases)}
+          {formatCurrency(customer.totalPurchases || 0)}
         </span>
       )) as any 
     },
     { 
       header: 'Outstanding', 
       accessor: ((customer: Customer) => (
-        <span className={customer.outstandingBalance > 0 ? 'font-semibold text-red-600 dark:text-red-400' : 'text-gray-400'}>
-          {customer.outstandingBalance > 0 ? formatCurrency(customer.outstandingBalance) : '-'}
+        <span className={(customer.outstandingBalance || 0) > 0 ? 'font-semibold text-red-600 dark:text-red-400' : 'text-gray-400'}>
+          {(customer.outstandingBalance || 0) > 0 ? formatCurrency(customer.outstandingBalance) : '-'}
         </span>
       )) as any 
     },
@@ -307,7 +427,7 @@ export default function CustomersPage() {
       accessor: ((customer: Customer) => (
         <div className="flex items-center gap-1">
           <Award className="w-3 h-3 text-yellow-500" />
-          <span className="font-medium text-gray-900 dark:text-gray-100">{customer.loyaltyPoints}</span>
+          <span className="font-medium text-gray-900 dark:text-gray-100">{customer.loyaltyPoints || 0}</span>
         </div>
       )) as any 
     },
@@ -348,17 +468,32 @@ export default function CustomersPage() {
   ];
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <>
+      <CustomAlert {...alertState} onClose={closeAlert} />
+      
+      <div className="space-y-6 p-4 sm:p-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Customer Management</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage customer relationships and track purchase history</p>
         </div>
-        <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          <span>Add Customer</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleRecalculateStats} 
+            variant="outline"
+            disabled={isRecalculating}
+            className="flex items-center gap-2"
+            title="Recalculate all customer stats from orders"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>{isRecalculating ? 'Syncing...' : 'Sync Stats'}</span>
+          </Button>
+          <Button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            <span>Add Customer</span>
+          </Button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -371,8 +506,8 @@ export default function CustomersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.active} active</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">{realStats.totalCustomers}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{customers.filter(c => c.status === 'active').length} active</div>
           </CardContent>
         </Card>
         
@@ -384,8 +519,8 @@ export default function CustomersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.vip}</div>
-            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{stats.new} new customers</div>
+            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{realStats.vipCustomers}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{realStats.newCustomers} new customers</div>
           </CardContent>
         </Card>
         
@@ -397,9 +532,9 @@ export default function CustomersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(stats.totalRevenue)}</div>
+            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{formatCurrency(realStats.totalRevenue)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Avg: {formatCurrency(stats.averageOrderValue)}
+              Avg: {formatCurrency(realStats.avgRevenue)}
             </div>
           </CardContent>
         </Card>
@@ -412,7 +547,7 @@ export default function CustomersPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(stats.totalOutstanding)}</div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{formatCurrency(realStats.totalOutstanding)}</div>
             <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">Amount due</div>
           </CardContent>
         </Card>
@@ -512,6 +647,7 @@ export default function CustomersPage() {
         }}
         onCreateOrder={handleCreateOrder}
       />
-    </div>
+      </div>
+    </>
   );
 }

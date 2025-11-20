@@ -64,13 +64,37 @@ export function ViewCustomerModal({ open, onClose, customer, onEdit, onCreateOrd
     setIsLoadingHistory(true);
     try {
       const ordersRef = collection(db, 'orders');
-      const q = query(
-        ordersRef, 
-        where('organizationId', '==', customer.organizationId),
-        where('clientName', '==', customer.name)
+      // Query by customerId (primary) or fallback to clientName for old orders
+      const queries = [
+        query(
+          ordersRef,
+          where('organizationId', '==', customer.organizationId),
+          where('customerId', '==', customer.id)
+        )
+      ];
+
+      // Also check for orders with matching clientName (for backwards compatibility)
+      queries.push(
+        query(
+          ordersRef,
+          where('organizationId', '==', customer.organizationId),
+          where('clientName', '==', customer.name)
+        )
       );
-      const querySnapshot = await getDocs(q);
-      const orders = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+
+      // Execute both queries and merge results
+      const results = await Promise.all(queries.map(q => getDocs(q)));
+      const orderMap = new Map<string, Order>();
+      
+      results.forEach(querySnapshot => {
+        querySnapshot.docs.forEach(doc => {
+          if (!orderMap.has(doc.id)) {
+            orderMap.set(doc.id, { id: doc.id, ...doc.data() } as Order);
+          }
+        });
+      });
+
+      const orders = Array.from(orderMap.values());
       orders.sort((a, b) => new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime());
       setPurchaseHistory(orders);
     } catch (error) {

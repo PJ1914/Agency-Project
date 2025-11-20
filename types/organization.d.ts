@@ -76,6 +76,8 @@ export interface User {
   photoURL?: string;
   currentOrganizationId?: string; // Active organization
   organizations: string[]; // Array of organization IDs user belongs to
+  role?: 'super-admin' | 'admin' | 'manager' | 'user'; // User role across the system
+  isSuperAdmin?: boolean; // Super admin has access to all organizations
   emailVerified: boolean;
   createdAt: Date | string;
   updatedAt: Date | string;

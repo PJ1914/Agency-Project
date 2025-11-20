@@ -14,6 +14,8 @@ import { AlertCircle, CheckCircle, Package, UserPlus, Search, QrCode } from 'luc
 import { collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { BarcodeScanner } from './BarcodeScanner';
+import { CustomAlert } from './CustomAlert';
+import { useCustomAlert } from '@/hooks/useCustomAlert';
 
 interface AddOrderModalProps {
   open: boolean;
@@ -24,8 +26,12 @@ interface AddOrderModalProps {
 
 export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: AddOrderModalProps) {
   const { currentOrganization } = useOrganization();
+  const { alertState, showAlert, closeAlert } = useCustomAlert();
   const [loading, setLoading] = useState(false);
-  const { data: inventory } = useFirestore<InventoryItem>('inventory');
+  const { data: inventory } = useFirestore<InventoryItem>(
+    'inventory',
+    currentOrganization?.id ? [where('organizationId', '==', currentOrganization.id)] : []
+  );
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<InventoryItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -131,8 +137,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
       const customersRef = collection(db, 'customers');
       const q = query(
         customersRef,
-        where('organizationId', '==', currentOrganization.id),
-        where('status', '==', 'active')
+        where('organizationId', '==', currentOrganization.id)
       );
       const snapshot = await getDocs(q);
       const customersList = snapshot.docs.map(doc => ({
@@ -140,7 +145,10 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
         ...doc.data()
       })) as Customer[];
       
-      setCustomers(customersList);
+      // Filter active customers in memory (status field might not exist in all records)
+      const activeCustomers = customersList.filter(c => !c.status || c.status === 'active');
+      
+      setCustomers(activeCustomers);
     } catch (error) {
       console.error('Error loading customers:', error);
     }
@@ -206,13 +214,21 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
     e.preventDefault();
     
     if (!selectedProduct) {
-      alert('Please select a product');
+      showAlert({
+        type: 'error',
+        title: 'Error',
+        message: 'Please select a product',
+      });
       return;
     }
     
     const requestedQty = parseInt(formData.quantity);
     if (requestedQty > selectedProduct.quantity) {
-      alert(`Cannot process order. Only ${selectedProduct.quantity} units available in stock.`);
+      showAlert({
+        type: 'error',
+        title: 'Insufficient Stock',
+        message: `Cannot process order. Only ${selectedProduct.quantity} units available in stock.`,
+      });
       return;
     }
 
@@ -290,7 +306,11 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
       onClose();
     } catch (error) {
       console.error('Error adding order:', error);
-      alert('Failed to add order. Please try again.');
+      showAlert({
+        type: 'error',
+        title: 'Failed',
+        message: 'Failed to add order. Please try again.',
+      });
     } finally {
       setLoading(false);
     }
@@ -388,7 +408,10 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
   );
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <>
+      <CustomAlert {...alertState} onClose={closeAlert} />
+      
+      <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-gray-900 custom-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-gray-900 dark:text-white">Add New Order</DialogTitle>
@@ -744,6 +767,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
           setShowBarcodeScanner(false);
         }}
       />
-    </Dialog>
+      </Dialog>
+    </>
   );
 }

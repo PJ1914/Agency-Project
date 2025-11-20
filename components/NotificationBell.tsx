@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, X, Check, AlertCircle, AlertTriangle, Info } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { Notification } from '@/types/notification.d';
 import { markNotificationAsRead, markAllNotificationsAsRead } from '@/lib/notifications';
 import { formatDateTime } from '@/lib/utils';
@@ -10,17 +11,19 @@ import { useRouter } from 'next/navigation';
 
 export function NotificationBell() {
   const router = useRouter();
+  const { currentOrganization } = useOrganization();
   const { notifications, notificationsLoading, refetchNotifications, unreadNotificationsCount } = useData();
   const [isOpen, setIsOpen] = useState(false);
-  const [allNotifications, setAllNotifications] = useState(notifications);
+  const [showOnlyUnread, setShowOnlyUnread] = useState(true);
+  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
-    setAllNotifications(notifications);
-  }, [notifications]);
-
-  useEffect(() => {
-    // Sort by newest first
-    const sorted = [...notifications].sort((a, b) => {
+    // Sort by newest first and filter based on showOnlyUnread
+    const filtered = showOnlyUnread 
+      ? notifications.filter(n => !n.read) 
+      : notifications;
+    
+    const sorted = [...filtered].sort((a, b) => {
       // Handle Firestore Timestamps
       let dateA: number;
       let dateB: number;
@@ -44,13 +47,15 @@ export function NotificationBell() {
       return dateB - dateA;
     });
     setAllNotifications(sorted);
-  }, [notifications]);
+  }, [notifications, showOnlyUnread]);
 
-  const unreadCount = notifications.length;
+  const unreadCount = unreadNotificationsCount;
 
   const handleMarkAsRead = async (notificationId: string, actionUrl?: string) => {
     try {
       await markNotificationAsRead(notificationId);
+      // Immediately update local state to remove the notification from view
+      setAllNotifications(prev => prev.filter(n => n.id !== notificationId));
       await refetchNotifications();
       
       if (actionUrl) {
@@ -64,7 +69,9 @@ export function NotificationBell() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAllNotificationsAsRead();
+      await markAllNotificationsAsRead(currentOrganization?.id);
+      // Immediately clear all notifications from view
+      setAllNotifications([]);
       await refetchNotifications();
     } catch (error) {
       console.error('Error marking all as read:', error);

@@ -13,12 +13,26 @@ interface AddInventoryModalProps {
   onAdd: (item: Partial<InventoryItem>) => Promise<void>;
 }
 
+// Function to generate SKU
+const generateSKU = () => {
+  const timestamp = Date.now().toString().slice(-8);
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `SKU-${timestamp}-${random}`;
+};
+
+// Function to generate barcode
+const generateBarcode = () => {
+  // Generate a 13-digit EAN-13 compatible barcode
+  const timestamp = Date.now().toString().slice(-12);
+  return `${timestamp}${Math.floor(Math.random() * 10)}`;
+};
+
 export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalProps) {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     productName: '',
-    sku: '',
-    barcode: '',
+    sku: generateSKU(),
+    barcode: generateBarcode(),
     batchNumber: '',
     expiryDate: '',
     manufacturingDate: '',
@@ -76,11 +90,11 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
         }]
       });
 
-      // Reset form
+      // Reset form with new generated codes
       setFormData({
         productName: '',
-        sku: '',
-        barcode: '',
+        sku: generateSKU(),
+        barcode: generateBarcode(),
         batchNumber: '',
         expiryDate: '',
         manufacturingDate: '',
@@ -129,23 +143,25 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="sku">SKU *</Label>
+              <Label htmlFor="sku">SKU * (Auto-generated)</Label>
               <Input
                 id="sku"
                 value={formData.sku}
                 onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                 placeholder="SKU-001"
                 required
+                className="bg-gray-50"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="barcode">Barcode / QR Code</Label>
+              <Label htmlFor="barcode">Barcode / QR Code (Auto-generated)</Label>
               <Input
                 id="barcode"
                 value={formData.barcode}
                 onChange={(e) => setFormData({ ...formData, barcode: e.target.value })}
                 placeholder="1234567890123"
+                className="bg-gray-50"
               />
             </div>
 

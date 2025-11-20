@@ -29,9 +29,10 @@ export async function createNotification(
 }
 
 // Check inventory levels and create low stock notifications
-export async function checkInventoryLevels(): Promise<void> {
+export async function checkInventoryLevels(organizationId?: string): Promise<void> {
   try {
-    const inventoryQuery = query(collection(db, 'inventory'));
+    const constraints = organizationId ? [where('organizationId', '==', organizationId)] : [];
+    const inventoryQuery = query(collection(db, 'inventory'), ...constraints);
     const snapshot = await getDocs(inventoryQuery);
     
     for (const docSnap of snapshot.docs) {
@@ -55,6 +56,7 @@ export async function checkInventoryLevels(): Promise<void> {
             message: `${item.productName} has ${item.quantity === 0 ? 'run out of stock' : `only ${item.quantity} units remaining`}. Threshold: ${item.lowStockThreshold}`,
             severity: item.quantity === 0 ? 'critical' : 'warning',
             inventoryId: item.id,
+            organizationId: item.organizationId,
             actionRequired: true,
             actionUrl: '/dashboard/inventory',
           });
@@ -67,11 +69,15 @@ export async function checkInventoryLevels(): Promise<void> {
 }
 
 // Check for pending payments and create notifications
-export async function checkPendingPayments(): Promise<void> {
+export async function checkPendingPayments(organizationId?: string): Promise<void> {
   try {
+    const constraints: any[] = [where('status', '==', 'Pending')];
+    if (organizationId) {
+      constraints.push(where('organizationId', '==', organizationId));
+    }
     const paymentsQuery = query(
       collection(db, 'transactions'),
-      where('status', '==', 'Pending')
+      ...constraints
     );
     const snapshot = await getDocs(paymentsQuery);
     
@@ -96,6 +102,7 @@ export async function checkPendingPayments(): Promise<void> {
           severity: 'warning',
           transactionId: transaction.id,
           orderId: transaction.orderId,
+          organizationId: transaction.organizationId,
           actionRequired: true,
           actionUrl: '/dashboard/payments',
         });
@@ -107,11 +114,15 @@ export async function checkPendingPayments(): Promise<void> {
 }
 
 // Check for failed payments
-export async function checkFailedPayments(): Promise<void> {
+export async function checkFailedPayments(organizationId?: string): Promise<void> {
   try {
+    const constraints: any[] = [where('status', '==', 'Failed')];
+    if (organizationId) {
+      constraints.push(where('organizationId', '==', organizationId));
+    }
     const paymentsQuery = query(
       collection(db, 'transactions'),
-      where('status', '==', 'Failed')
+      ...constraints
     );
     const snapshot = await getDocs(paymentsQuery);
     
@@ -135,6 +146,7 @@ export async function checkFailedPayments(): Promise<void> {
           severity: 'critical',
           transactionId: transaction.id,
           orderId: transaction.orderId,
+          organizationId: transaction.organizationId,
           actionRequired: true,
           actionUrl: '/dashboard/payments',
         });
@@ -157,11 +169,16 @@ export async function markNotificationAsRead(notificationId: string): Promise<vo
 }
 
 // Mark all notifications as read
-export async function markAllNotificationsAsRead(): Promise<void> {
+export async function markAllNotificationsAsRead(organizationId?: string): Promise<void> {
   try {
+    const constraints = [where('read', '==', false)];
+    if (organizationId) {
+      constraints.push(where('organizationId', '==', organizationId));
+    }
+    
     const notifQuery = query(
       collection(db, 'notifications'),
-      where('read', '==', false)
+      ...constraints
     );
     const snapshot = await getDocs(notifQuery);
     
@@ -198,10 +215,10 @@ export async function sendEmailNotification(
 }
 
 // Run all checks
-export async function runAllNotificationChecks(): Promise<void> {
+export async function runAllNotificationChecks(organizationId?: string): Promise<void> {
   await Promise.all([
-    checkInventoryLevels(),
-    checkPendingPayments(),
-    checkFailedPayments(),
+    checkInventoryLevels(organizationId),
+    checkPendingPayments(organizationId),
+    checkFailedPayments(organizationId),
   ]);
 }
