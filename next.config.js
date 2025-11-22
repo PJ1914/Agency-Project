@@ -1,22 +1,31 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  output: 'standalone',
   images: {
     domains: ['firebasestorage.googleapis.com'],
   },
-  // Optimize for Vercel deployment
-  typescript: {
-    // Don't fail build on type errors (will still show warnings)
-    ignoreBuildErrors: false,
-  },
+  // ESLint configuration for production
   eslint: {
-    // Don't fail build on lint errors during production builds
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // Ignore warnings during production builds
   },
-  // Reduce memory usage during build
-  experimental: {
-    workerThreads: false,
-    cpus: 1
+  // Optimize bundle size
+  swcMinify: true,
+  compiler: {
+    removeConsole: process.env.NODE_ENV === 'production' ? { exclude: ['error', 'warn'] } : false,
+  },
+  // Webpack optimization
+  webpack: (config, { isServer }) => {
+    // Exclude firebase-admin from client bundle
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    return config;
   },
   env: {
     NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,

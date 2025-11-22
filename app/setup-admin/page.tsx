@@ -145,9 +145,9 @@ export default function AdminSetupPage() {
             <p className="font-medium">After setup:</p>
             <ul className="list-disc list-inside space-y-1 pl-2">
               <li>Sign out and sign back in</li>
-              <li>You'll see "Organizations" in the sidebar</li>
-              <li>You'll see "Admin" section in the sidebar</li>
-              <li>You'll have access to all organizations</li>
+              <li>You&apos;ll see &quot;Organizations&quot; in the sidebar</li>
+              <li>You&apos;ll see &quot;Admin&quot; section in the sidebar</li>
+              <li>You&apos;ll have access to all organizations</li>
             </ul>
           </div>
         </CardContent>
