@@ -237,7 +237,12 @@ export default function AIChatbotPage() {
         }]);
       } else {
         // No action detected, treat as regular question
-        const response = await generateChatbotResponse(userMessage, {}, currentOrganization.id);
+        // Pass chat history for context retention
+        const response = await generateChatbotResponse(
+          userMessage, 
+          { chatHistory: chatMessages }, 
+          currentOrganization.id
+        );
         
         setChatMessages(prev => [...prev, { 
           role: 'assistant', 

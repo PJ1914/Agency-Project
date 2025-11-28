@@ -372,7 +372,7 @@ export function AddOrderModal({ open, onClose, onAdd, preSelectedCustomer }: Add
         totalOrders: 0,
         totalPurchases: 0,
         outstandingBalance: 0,
-        loyaltyPoints: 0,
+        ...(currentOrganization?.settings?.loyaltyProgram?.enabled && { loyaltyPoints: 0 }),
         discountPercentage: 0,
         notes: [],
         organizationId: currentOrganization.id,

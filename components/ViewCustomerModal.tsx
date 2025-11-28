@@ -26,6 +26,7 @@ import { formatCurrency, formatDate } from '@/lib/utils';
 import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganization } from '@/contexts/OrganizationContext';
 import { useRouter } from 'next/navigation';
 
 interface ViewCustomerModalProps {
@@ -38,6 +39,7 @@ interface ViewCustomerModalProps {
 
 export function ViewCustomerModal({ open, onClose, customer, onEdit, onCreateOrder }: ViewCustomerModalProps) {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const router = useRouter();
   const [purchaseHistory, setPurchaseHistory] = useState<Order[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -215,17 +217,19 @@ export function ViewCustomerModal({ open, onClose, customer, onEdit, onCreateOrd
                   </div>
                 </CardContent>
               </Card>
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardDescription>Loyalty Points</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
-                    <Award className="w-5 h-5" />
-                    {customer.loyaltyPoints}
-                  </div>
-                </CardContent>
-              </Card>
+              {currentOrganization?.settings?.loyaltyProgram?.enabled && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardDescription>Loyalty Points</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 flex items-center gap-2">
+                      <Award className="w-5 h-5" />
+                      {customer.loyaltyPoints || 0}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             {/* Contact Information */}

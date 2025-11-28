@@ -390,7 +390,8 @@ export async function generateChatbotResponse(
       totalOrders: salesData.length,
       recentOrders: salesData.slice(0, 5),
       totalInventoryItems: inventoryData.length,
-      lowStockItems: inventoryData.filter(item => item.stock <= item.minStock),
+      lowStockItems: inventoryData.filter(item => item.quantity <= item.lowStockThreshold),
+      allInventoryItems: inventoryData, // Include ALL inventory items
       totalCustomers: customerData.totalCustomers,
       activeCustomers: customerData.activeCustomers,
       ...context
@@ -398,10 +399,22 @@ export async function generateChatbotResponse(
 
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' });
 
+    // Build conversation history string
+    let conversationHistory = '';
+    if (context.chatHistory && Array.isArray(context.chatHistory)) {
+      conversationHistory = '\n\nConversation History:\n';
+      // Include last 10 messages for context
+      const recentHistory = context.chatHistory.slice(-10);
+      recentHistory.forEach((msg: any) => {
+        conversationHistory += `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}\n`;
+      });
+      conversationHistory += '\n';
+    }
+
     const prompt = `
 You are an AI assistant for a business inventory management and billing system. You have access to real-time business data.
 
-User Question: ${message}
+User Question: ${message}${conversationHistory}
 
 Business Context:
 - Total Orders: ${businessContext.totalOrders}
@@ -410,6 +423,9 @@ Business Context:
 - Total Customers: ${businessContext.totalCustomers}
 - Active Customers: ${businessContext.activeCustomers}
 
+Complete Inventory Database (All ${inventoryData.length} products):
+${JSON.stringify(inventoryData, null, 2)}
+
 Recent Orders (last 5):
 ${JSON.stringify(businessContext.recentOrders, null, 2)}
 
@@ -417,11 +433,15 @@ Low Stock Items:
 ${JSON.stringify(businessContext.lowStockItems.slice(0, 5), null, 2)}
 
 Task: Provide a helpful, professional, and accurate response based on the real business data. 
-- Answer questions about orders, inventory, customers, sales
-- Provide insights and recommendations
-- Use actual numbers from the context
+- You MUST reference the complete inventory database above when answering questions about products, stock, or inventory
+- Answer questions about orders, inventory, customers, sales using the ACTUAL data provided
+- Search through the Complete Inventory Database to find specific products by name, SKU, or category
+- Provide insights and recommendations based on real numbers
 - Be concise and actionable
-- If asked about specific items not in the data, say so clearly
+- If asked about specific items, search the inventory list carefully before saying it doesn't exist
+- Remember all previous messages in this conversation to provide context-aware responses
+
+IMPORTANT: The Complete Inventory Database above is your source of truth for ALL inventory-related questions. Always check it first.
 
 Response:`;
 
@@ -634,12 +654,14 @@ async function getOrganizationInventoryData(organizationId: string) {
       const data = doc.data();
       return {
         id: doc.id,
-        name: data.name,
+        productName: data.productName || data.name,
         sku: data.sku,
-        stock: data.stock || data.quantity || 0,
-        minStock: data.minStock || data.lowStockThreshold || 10,
+        quantity: data.quantity || data.stock || 0,
         price: data.price || 0,
-        category: data.category
+        category: data.category,
+        lowStockThreshold: data.lowStockThreshold || data.minStock || 10,
+        supplier: data.supplier,
+        location: data.location
       };
     });
   } catch (error) {

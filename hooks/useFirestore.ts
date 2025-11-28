@@ -73,8 +73,8 @@ export function useFirestore<T>(
     isMounted.current = true;
     
     // Don't fetch if constraints array is empty (no organizationId filter)
+    // This is expected when waiting for organization to load - no need to warn
     if (constraints.length === 0) {
-      console.warn(`⚠️  [useFirestore] Skipping fetch for ${collectionName} - no constraints provided`);
       setData([]);
       setLoading(false);
       return;

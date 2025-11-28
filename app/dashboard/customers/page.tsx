@@ -212,7 +212,7 @@ export default function CustomersPage() {
         totalPurchases: 0,
         totalOrders: 0,
         outstandingBalance: 0,
-        loyaltyPoints: 0,
+        loyaltyPoints: currentOrganization?.settings?.loyaltyProgram?.enabled ? 0 : undefined,
         notes: [],
         tags: customer.tags || [],
         type: customer.type || 'new',
@@ -422,7 +422,7 @@ export default function CustomersPage() {
         </span>
       )) as any 
     },
-    { 
+    ...(currentOrganization?.settings?.loyaltyProgram?.enabled ? [{ 
       header: 'Loyalty Points', 
       accessor: ((customer: Customer) => (
         <div className="flex items-center gap-1">
@@ -430,7 +430,7 @@ export default function CustomersPage() {
           <span className="font-medium text-gray-900 dark:text-gray-100">{customer.loyaltyPoints || 0}</span>
         </div>
       )) as any 
-    },
+    }] : []),
     {
       header: 'Actions',
       accessor: ((customer: Customer) => (

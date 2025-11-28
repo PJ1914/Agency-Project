@@ -40,6 +40,8 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
     price: '',
     unitPrice: '',
     category: '',
+    subcategory: '',
+    size: '',
     lowStockThreshold: '',
     reorderPoint: '',
     reorderQuantity: '',
@@ -72,6 +74,8 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
         price: priceValue,
         unitPrice: calculatedUnitPrice,
         category: formData.category || undefined,
+        subcategory: formData.subcategory || undefined,
+        size: formData.size || undefined,
         lowStockThreshold: formData.lowStockThreshold ? parseInt(formData.lowStockThreshold) : undefined,
         reorderPoint: formData.reorderPoint ? parseInt(formData.reorderPoint) : undefined,
         reorderQuantity: formData.reorderQuantity ? parseInt(formData.reorderQuantity) : undefined,
@@ -102,6 +106,8 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
         price: '',
         unitPrice: '',
         category: '',
+        subcategory: '',
+        size: '',
         lowStockThreshold: '',
         reorderPoint: '',
         reorderQuantity: '',
@@ -238,7 +244,27 @@ export function AddInventoryModal({ open, onClose, onAdd }: AddInventoryModalPro
                 id="category"
                 value={formData.category}
                 onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                placeholder="Category"
+                placeholder="e.g., Huggies Comfy Pants"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="subcategory">Subcategory</Label>
+              <Input
+                id="subcategory"
+                value={formData.subcategory}
+                onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                placeholder="e.g., Huggies Comfy Pants"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="size">Size</Label>
+              <Input
+                id="size"
+                value={formData.size}
+                onChange={(e) => setFormData({ ...formData, size: e.target.value })}
+                placeholder="e.g., XL, L, M, S, NB"
               />
             </div>
 

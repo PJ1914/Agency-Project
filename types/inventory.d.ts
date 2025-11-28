@@ -22,6 +22,8 @@ export interface InventoryItem {
   price: number;
   unitPrice: number;
   category?: string;
+  subcategory?: string;
+  size?: string;
   lowStockThreshold?: number;
   reorderPoint?: number; // Optimal reorder level
   reorderQuantity?: number; // Economic order quantity
@@ -42,6 +44,8 @@ export interface InventoryFormData {
   price: number;
   unitPrice: number;
   category?: string;
+  subcategory?: string;
+  size?: string;
   lowStockThreshold?: number;
   description?: string;
 }

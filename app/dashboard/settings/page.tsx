@@ -22,7 +22,8 @@ import {
   DollarSign,
   Save,
   Monitor,
-  FileText
+  FileText,
+  Star
 } from 'lucide-react';
 
 interface Settings {
@@ -45,6 +46,11 @@ interface Settings {
     compactMode: boolean;
     showAnimations: boolean;
     autoSave: boolean;
+  };
+  loyaltyProgram: {
+    enabled: boolean;
+    pointsPerPurchase: number;
+    redemptionRate: number;
   };
 }
 
@@ -71,6 +77,11 @@ export default function SettingsPage() {
       compactMode: false,
       showAnimations: true,
       autoSave: true,
+    },
+    loyaltyProgram: {
+      enabled: false,
+      pointsPerPurchase: 1,
+      redemptionRate: 100,
     },
   });
 
@@ -102,7 +113,24 @@ export default function SettingsPage() {
   useEffect(() => {
     const savedSettings = localStorage.getItem('appSettings');
     if (savedSettings) {
-      setSettings(JSON.parse(savedSettings));
+      const parsed = JSON.parse(savedSettings);
+      setSettings({
+        ...parsed,
+        loyaltyProgram: parsed.loyaltyProgram || {
+          enabled: currentOrganization?.settings?.loyaltyProgram?.enabled || false,
+          pointsPerPurchase: currentOrganization?.settings?.loyaltyProgram?.pointsPerPurchase || 1,
+          redemptionRate: currentOrganization?.settings?.loyaltyProgram?.redemptionRate || 100,
+        },
+      });
+    } else if (currentOrganization?.settings?.loyaltyProgram) {
+      setSettings(prev => ({
+        ...prev,
+        loyaltyProgram: {
+          enabled: currentOrganization?.settings?.loyaltyProgram?.enabled || false,
+          pointsPerPurchase: currentOrganization?.settings?.loyaltyProgram?.pointsPerPurchase || 1,
+          redemptionRate: currentOrganization?.settings?.loyaltyProgram?.redemptionRate || 100,
+        },
+      }));
     }
     
     // Load invoice settings from organization
@@ -157,12 +185,13 @@ export default function SettingsPage() {
     try {
       localStorage.setItem('appSettings', JSON.stringify(settings));
       
-      // Save invoice settings to organization
+      // Save invoice and loyalty settings to organization
       if (currentOrganization?.id) {
         await updateDocument('organizations', currentOrganization.id, {
           settings: {
             ...currentOrganization.settings,
             invoice: invoiceSettings,
+            loyaltyProgram: settings.loyaltyProgram,
           },
         });
         await refetchOrganization();
@@ -582,6 +611,112 @@ export default function SettingsPage() {
               </select>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Loyalty Program Settings */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Star className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+            <CardTitle>Customer Loyalty Program</CardTitle>
+          </div>
+          <CardDescription>Manage rewards and points for customer retention</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between py-2">
+            <div>
+              <div className="text-sm font-medium dark:text-gray-200">Enable Loyalty Program</div>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Turn on/off loyalty points for customers</p>
+            </div>
+            <button
+              onClick={() => {
+                setSettings(prev => ({
+                  ...prev,
+                  loyaltyProgram: {
+                    ...prev.loyaltyProgram,
+                    enabled: !prev.loyaltyProgram.enabled,
+                  },
+                }));
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                settings.loyaltyProgram.enabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  settings.loyaltyProgram.enabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {settings.loyaltyProgram.enabled && (
+            <>
+              <Separator className="dark:bg-gray-700" />
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Loyalty Configuration</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="pointsPerPurchase" className="text-gray-700 dark:text-gray-300">
+                      Points Per Purchase
+                    </Label>
+                    <Input
+                      id="pointsPerPurchase"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={settings.loyaltyProgram.pointsPerPurchase}
+                      onChange={(e) => {
+                        setSettings(prev => ({
+                          ...prev,
+                          loyaltyProgram: {
+                            ...prev.loyaltyProgram,
+                            pointsPerPurchase: parseInt(e.target.value) || 0,
+                          },
+                        }));
+                      }}
+                      className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Points awarded per ₹100 spent
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="redemptionRate" className="text-gray-700 dark:text-gray-300">
+                      Redemption Rate
+                    </Label>
+                    <Input
+                      id="redemptionRate"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={settings.loyaltyProgram.redemptionRate}
+                      onChange={(e) => {
+                        setSettings(prev => ({
+                          ...prev,
+                          loyaltyProgram: {
+                            ...prev.loyaltyProgram,
+                            redemptionRate: parseInt(e.target.value) || 100,
+                          },
+                        }));
+                      }}
+                      className="mt-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100"
+                    />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Points needed for ₹1 discount
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    <strong>Example:</strong> With {settings.loyaltyProgram.pointsPerPurchase} points per ₹100 and redemption at {settings.loyaltyProgram.redemptionRate} points = ₹1, 
+                    a customer spending ₹1000 earns {settings.loyaltyProgram.pointsPerPurchase * 10} points worth ₹{((settings.loyaltyProgram.pointsPerPurchase * 10) / settings.loyaltyProgram.redemptionRate).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 

@@ -6,7 +6,8 @@ import { Order } from '@/types/order.d';
 import { Customer } from '@/types/customer.d';
 import { DataTable } from '@/components/Table';
 import { Button } from '@/components/ui/button';
-import { Plus, Edit, Trash2, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, FileText, Eye, Printer } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/utils';
 import { addDocument, updateDocument, deleteDocument } from '@/lib/firestore';
 import { AddOrderModal } from '@/components/AddOrderModal';
@@ -28,6 +29,8 @@ export default function OrdersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [preSelectedCustomer, setPreSelectedCustomer] = useState<Customer | null>(null);
+  const [isInvoicePreviewOpen, setIsInvoicePreviewOpen] = useState(false);
+  const [invoicePreviewUrl, setInvoicePreviewUrl] = useState<string | null>(null);
 
   // Check for pre-selected customer from navigation
   useEffect(() => {
@@ -324,6 +327,99 @@ export default function OrdersPage() {
     }
   };
 
+  const handleViewInvoice = async (order: Order) => {
+    try {
+      if (!currentOrganization) {
+        showAlert({
+          type: 'error',
+          title: 'Error',
+          message: 'No organization selected',
+        });
+        return;
+      }
+
+      // Validate invoice settings
+      const invoiceConfig = currentOrganization?.settings?.invoice;
+      const validation = validateInvoiceSettings(currentOrganization as any);
+      
+      if (!validation.isValid) {
+        showAlert({
+          type: 'error',
+          title: 'Invoice Settings Incomplete',
+          message: formatValidationMessage(validation),
+        });
+        return;
+      }
+
+      const companyName = invoiceConfig?.companyName || currentOrganization.name;
+      const companyAddress = invoiceConfig?.companyAddress || currentOrganization.address || 'Address not set';
+      const companyPhone = invoiceConfig?.companyPhone || currentOrganization.phone || 'Phone not set';
+      const companyEmail = invoiceConfig?.companyEmail || currentOrganization.email || 'Email not set';
+      const companyGSTIN = invoiceConfig?.gstin || 'GSTIN not set';
+
+      const invoiceData = {
+        invoiceNumber: order.orderId,
+        date: formatDate(order.orderDate),
+        customerName: order.clientName,
+        customerAddress: order.country,
+        salesMan: 'Sales Representative',
+        items: [
+          {
+            product: order.productName,
+            hsn: '96190040',
+            mrp: order.amount / order.quantity,
+            qty: order.quantity,
+            free: 0,
+            rate: order.amount / order.quantity,
+            dis: 0,
+            dis2: 0,
+            sgst: 2.5,
+            cgst: 2.5,
+            amount: order.amount
+          }
+        ],
+        organizationName: companyName,
+        organizationAddress: companyAddress,
+        organizationPhone: companyPhone,
+        organizationEmail: companyEmail,
+        organizationGSTIN: companyGSTIN,
+        termsAndConditions: invoiceConfig?.termsAndConditions || 'Goods once sold will not be taken back or exchanged.\\nBills not due date will attract 24% interest.',
+        footerText: invoiceConfig?.footerText || 'Thank you for your business!'
+      };
+
+      const pdfBlob = await generateInvoicePDF(invoiceData);
+      const url = URL.createObjectURL(pdfBlob);
+      setInvoicePreviewUrl(url);
+      setIsInvoicePreviewOpen(true);
+    } catch (error) {
+      console.error('Error viewing invoice:', error);
+      showAlert({
+        type: 'error',
+        title: 'Invoice Error',
+        message: error instanceof Error ? error.message : 'Failed to view invoice',
+      });
+    }
+  };
+
+  const handlePrintInvoice = () => {
+    if (invoicePreviewUrl) {
+      const printWindow = window.open(invoicePreviewUrl, '_blank');
+      if (printWindow) {
+        printWindow.addEventListener('load', () => {
+          printWindow.print();
+        });
+      }
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (invoicePreviewUrl) {
+      URL.revokeObjectURL(invoicePreviewUrl);
+      setInvoicePreviewUrl(null);
+    }
+    setIsInvoicePreviewOpen(false);
+  };
+
   const columns = [
     { header: 'Order ID', accessor: 'orderId' as keyof Order },
     { header: 'Client', accessor: 'clientName' as keyof Order },
@@ -352,13 +448,22 @@ export default function OrdersPage() {
     {
       header: 'Actions',
       accessor: ((order: Order) => (
-        <div className="flex items-center space-x-1 sm:space-x-2">
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleViewInvoice(order)}
+            className="hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20 p-1 sm:p-2"
+            title="View Invoice"
+          >
+            <Eye className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleGenerateInvoice(order)}
             className="hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 p-1 sm:p-2"
-            title="Generate Invoice"
+            title="Download Invoice"
           >
             <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
@@ -367,6 +472,7 @@ export default function OrdersPage() {
             size="sm"
             onClick={() => handleEdit(order)}
             className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 p-1 sm:p-2"
+            title="Edit Order"
           >
             <Edit className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
@@ -375,6 +481,7 @@ export default function OrdersPage() {
             size="sm"
             onClick={() => handleDelete(order.id!)}
             className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 p-1 sm:p-2"
+            title="Delete Order"
           >
             <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </Button>
@@ -453,6 +560,36 @@ export default function OrdersPage() {
         onUpdate={handleUpdate}
         order={selectedOrder}
       />
+
+      <Dialog open={isInvoicePreviewOpen} onOpenChange={handleClosePreview}>
+        <DialogContent className="max-w-5xl h-[90vh] p-0 overflow-hidden">
+          <DialogHeader className="p-4 border-b">
+            <div className="flex items-center justify-between">
+              <DialogTitle>Invoice Preview</DialogTitle>
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={handlePrintInvoice}
+                  className="flex items-center gap-2"
+                  size="sm"
+                >
+                  <Printer className="w-4 h-4" />
+                  Print
+                </Button>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="h-full overflow-auto p-4">
+            {invoicePreviewUrl && (
+              <iframe
+                src={invoicePreviewUrl}
+                className="w-full h-full border-0"
+                title="Invoice Preview"
+                style={{ minHeight: '600px' }}
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
       </div>
     </>
   );

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Customer, CustomerType, CustomerStatus } from '@/types/customer.d';
+import { useOrganization } from '@/contexts/OrganizationContext';
 
 interface EditCustomerModalProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface EditCustomerModalProps {
 }
 
 export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCustomerModalProps) {
+  const { currentOrganization } = useOrganization();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<Customer>>({});
 
@@ -244,15 +246,17 @@ export function EditCustomerModal({ open, onClose, onUpdate, customer }: EditCus
                   onChange={(e) => setFormData({ ...formData, outstandingBalance: parseFloat(e.target.value) || 0 })}
                 />
               </div>
-              <div>
-                <Label htmlFor="edit-loyaltyPoints">Loyalty Points</Label>
-                <Input
-                  id="edit-loyaltyPoints"
-                  type="number"
-                  value={formData.loyaltyPoints || 0}
-                  onChange={(e) => setFormData({ ...formData, loyaltyPoints: parseInt(e.target.value) || 0 })}
-                />
-              </div>
+              {currentOrganization?.settings?.loyaltyProgram?.enabled && (
+                <div>
+                  <Label htmlFor="edit-loyaltyPoints">Loyalty Points</Label>
+                  <Input
+                    id="edit-loyaltyPoints"
+                    type="number"
+                    value={formData.loyaltyPoints || 0}
+                    onChange={(e) => setFormData({ ...formData, loyaltyPoints: parseInt(e.target.value) || 0 })}
+                  />
+                </div>
+              )}
             </div>
           </div>
 

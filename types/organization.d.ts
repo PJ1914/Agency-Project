@@ -27,6 +27,11 @@ export interface Organization {
     theme?: 'light' | 'dark';
     notifications?: boolean;
     twoFactorAuth?: boolean;
+    loyaltyProgram?: {
+      enabled: boolean;
+      pointsPerPurchase: number;
+      redemptionRate: number;
+    };
     invoice?: {
       companyName?: string;
       companyAddress?: string;

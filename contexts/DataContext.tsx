@@ -49,6 +49,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { currentOrganization } = useOrganization();
   const organizationId = currentOrganization?.id;
 
+  // Create constraints only when organizationId is available
+  const ordersConstraints = organizationId ? [where('organizationId', '==', organizationId)] : undefined;
+  const transactionsConstraints = organizationId ? [where('organizationId', '==', organizationId)] : undefined;
+  const shipmentsConstraints = organizationId ? [where('organizationId', '==', organizationId)] : undefined;
+  const inventoryConstraints = organizationId ? [where('organizationId', '==', organizationId)] : undefined;
+  const notificationsConstraints = organizationId ? [where('organizationId', '==', organizationId)] : undefined;
+
   // Fetch data filtered by organization
   // CRITICAL: These queries MUST include organizationId filter to prevent data leakage
   const { 
@@ -56,37 +63,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
     loading: ordersLoading, 
     error: ordersError, 
     refetch: refetchOrders 
-  } = useFirestore<Order>('orders', organizationId ? [where('organizationId', '==', organizationId)] : []);
+  } = useFirestore<Order>('orders', ordersConstraints || []);
 
   const { 
     data: transactions, 
     loading: transactionsLoading, 
     error: transactionsError, 
     refetch: refetchTransactions 
-  } = useFirestore<Transaction>('transactions', organizationId ? [where('organizationId', '==', organizationId)] : []);
+  } = useFirestore<Transaction>('transactions', transactionsConstraints || []);
 
   const { 
     data: shipments, 
     loading: shipmentsLoading, 
     error: shipmentsError, 
     refetch: refetchShipments 
-  } = useFirestore<Shipment>('shipments', organizationId ? [where('organizationId', '==', organizationId)] : []);
+  } = useFirestore<Shipment>('shipments', shipmentsConstraints || []);
 
   const { 
     data: inventory, 
     loading: inventoryLoading, 
     error: inventoryError, 
     refetch: refetchInventory 
-  } = useFirestore<InventoryItem>('inventory', organizationId ? [where('organizationId', '==', organizationId)] : []);
+  } = useFirestore<InventoryItem>('inventory', inventoryConstraints || []);
 
   const { 
     data: notifications, 
     loading: notificationsLoading, 
     error: notificationsError, 
     refetch: refetchNotifications 
-  } = useFirestore<Notification>('notifications', organizationId ? [
-    where('organizationId', '==', organizationId)
-  ] : []);
+  } = useFirestore<Notification>('notifications', notificationsConstraints || []);
 
   // Filter unread notifications for count
   const unreadNotificationsCount = notifications.filter(n => !n.read).length;

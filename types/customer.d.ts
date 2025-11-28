@@ -35,7 +35,7 @@ export interface Customer {
   creditLimit?: number; // Max credit allowed
   
   // Loyalty & Engagement
-  loyaltyPoints: number;
+  loyaltyPoints?: number; // Optional - only present if loyalty program is enabled
   discountPercentage: number; // Custom discount for this customer
   
   // Dates
